@@ -1,6 +1,12 @@
 source "https://rubygems.org"
 
 gem "jekyll"
-gem "minimal-mistakes-jekyll"
+gem "jekyll-remote-theme"
 gem "jekyll-feed"
 gem "jekyll-seo-tag"
+gem "jekyll-paginate"
+gem "jekyll-sitemap"
+gem "jekyll-gist"
+gem "jemoji"
+gem "jekyll-include-cache"
+gem "kramdown-parser-gfm"
