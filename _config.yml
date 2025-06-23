@@ -3,7 +3,7 @@
 # https://mmistakes.github.io/minimal-mistakes/docs/quick-start-guide/#installing-the-theme
 
 # theme                  : "minimal-mistakes-jekyll"
-remote_theme           : "mmistakes/minimal-mistakes@4.16.4"
+remote_theme           : "mmistakes/minimal-mistakes@4.27.1"
 minimal_mistakes_skin    : "contrast" # "default", "air", "aqua", "contrast", "dark", "dirt", "neon", "mint", "plum", "sunrise"
 
 # Site Settings
@@ -101,7 +101,7 @@ author:
   name             : "David Williams"
   avatar           : # path of avatar image, e.g. "/assets/images/bio-photo.jpg"
   bio              : "Lover of AI and Robotics"
-  location         : "Placerville, CA"
+  location         : "East CA"
   email            :
   links:
     - label: "Email"
@@ -128,10 +128,10 @@ footer:
   links:
     - label: "Twitter"
       icon: "fab fa-fw fa-twitter-square"
-      url: https://twitter.com/davidthings
+      url: https://x.com/spokeroboticss
     - label: "GitHub"
       icon: "fab fa-fw fa-github"
-      url: https://github.com/davidthings
+      url: https://github.com/spokerobotics
 
 
 # Reading Files
