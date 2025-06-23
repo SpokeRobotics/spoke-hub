@@ -32,7 +32,7 @@ title_separator          : "-"
 name                     : "SpokeRobotics"
 description              : "Information, Tools and Libraries"
 url                      : https://spokerobotics.github.io
-baseurl                  : ""
+baseurl                  : "/website"
 repository               : "spokerobotics/website"
 teaser                   : # path of fallback teaser image, e.g. "/assets/images/500x300.png"
 logo                     : "/assets/images/logo.png"
