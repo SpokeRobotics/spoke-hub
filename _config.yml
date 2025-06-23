@@ -33,12 +33,60 @@ title_separator          : "-"
 name                     : "SpokeRobotics"
 description              : "Information, Tools and Libraries"
 url                      : https://spokerobotics.github.io
-baseurl                  : /
+baseurl                  : ""
 repository               : "spokerobotics/website"
 teaser                   : # path of fallback teaser image, e.g. "/assets/images/500x300.png"
-logo                     : # path of logo image to display in the masthead, e.g. "/assets/images/88x88.png"
+logo                     : "/assets/images/logo.png"
 masthead_title           : # overrides the website title displayed in the masthead, use " " for no title
-breadcrumbs              : true #false # true, false (default)
+breadcrumbs              : true
+
+
+
+main:
+  - title: Home
+    url: /
+  - title: Getting Started
+    url: /getting-started/
+  - title: Frame
+    url: /frame/
+    children:
+      - title: Assembly Guide
+        url: /frame/assembly/
+      - title: Customization
+        url: /frame/customization/
+      - title: Specifications
+        url: /frame/specs/
+  - title: Electronics
+    url: /electronics/
+    children:
+      - title: Control System
+        url: /electronics/control/
+      - title: Sensors
+        url: /electronics/sensors/
+      - title: Power
+        url: /electronics/power/
+  - title: Mechanism
+    url: /mechanism/
+    children:
+      - title: Actuators
+        url: /mechanism/actuators/
+      - title: Joints
+        url: /mechanism/joints/
+      - title: Payload
+        url: /mechanism/payload/
+  - title: Device Network
+    url: /device-network/
+    children:
+      - title: Event Messaging
+        url: /device-network/events/
+      - title: Network Protocol
+        url: /device-network/protocol/
+  - title: Documentation
+    url: /docs/
+  - title: Community
+    url: /community/
+  - title: GitHub
+    url: https://github.com/spokerobotics/website
 words_per_minute         : 200
 comments:
   provider               : # false (default), "disqus", "discourse", "facebook", "staticman", "staticman_v2", "utterances", "custom"

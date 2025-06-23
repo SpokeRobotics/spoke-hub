@@ -4,5 +4,12 @@
 
 @charset "utf-8";
 
+// Overriding the default max-width to make the layout wider.
+$max-width: 80%;
+
 @import "minimal-mistakes/skins/{{ site.minimal_mistakes_skin | default: 'default' }}"; // skin
-@import "minimal-mistakes"; // main partials
+@import "minimal-mistakes"; // import everything else
+
+#latest-posts {
+  margin-bottom: 0.5em;
+}

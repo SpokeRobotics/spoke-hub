@@ -1,0 +1,56 @@
+{% if include.id == "intro" %}
+<div class="feature__wrapper">
+  <div class="feature__item">
+    <h2 class="archive__item-title">Welcome to Spoke Robotics</h2>
+    <p class="archive__item-excerpt">Build your own open-source robot for education and research.</p>
+  </div>
+</div>
+{% elsif include.id == "getting-started" %}
+<div class="grid__wrapper">
+  <div class="grid__item">
+    <h3>Quick Start Guide</h3>
+    <p>Get your Spoke robot up and running in no time.</p>
+    <a href="#" class="btn">Start Building</a>
+  </div>
+  <div class="grid__item">
+    <h3>Hardware Requirements</h3>
+    <p>Check the components you'll need.</p>
+    <a href="#" class="btn">View Components</a>
+  </div>
+</div>
+
+{% elsif include.id == "documentation" %}
+<div class="grid__wrapper">
+  <div class="grid__item">
+    <h3>Complete Documentation</h3>
+    <p>Access detailed guides and specifications.</p>
+    <a href="#" class="btn">View Docs</a>
+  </div>
+  <div class="grid__item">
+    <h3>API Reference</h3>
+    <p>Technical specifications and protocols.</p>
+    <a href="#" class="btn">API Docs</a>
+  </div>
+</div>
+{% elsif include.id == "community" %}
+<div class="grid__wrapper">
+  <div class="grid__item">
+    <h3>Join the Community</h3>
+    <p>Connect with other builders.</p>
+    <a href="#" class="btn">Join Discord</a>
+  </div>
+  <div class="grid__item">
+    <h3>Contribute</h3>
+    <p>Help improve the platform.</p>
+    <a href="#" class="btn">Contributing Guide</a>
+  </div>
+</div>
+{% elsif include.id == "get-involved" %}
+<div class="feature__wrapper">
+  <div class="feature__item">
+    <h2 class="archive__item-title">Ready to Start?</h2>
+    <p class="archive__item-excerpt">Join our community of builders and start your robotics journey today.</p>
+    <a href="#" class="btn btn--large">Get Started</a>
+  </div>
+</div>
+{% endif %}

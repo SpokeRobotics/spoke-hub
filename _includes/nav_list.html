@@ -1,0 +1,32 @@
+{% if include.nav == "main" %}
+  {% assign nav = site.main %}
+{% elsif include.nav %}
+  {% assign nav = site.data.nav[include.nav] %}
+{% endif %}
+
+{% if nav %}
+  <nav class="nav__list">
+    <header class="nav__group-title">
+      <h3>{{ include.title | default: nav.title }}</h3>
+    </header>
+    <ul class="nav__items">
+      {% for item in nav %}
+        {% if item.url and item.url != '#' %}
+          <li class="nav__item">
+            <a href="{{ item.url | relative_url }}" class="nav__link{% if page.url == item.url %} active{% endif %}">
+              <span>{{ item.title }}</span>
+            </a>
+          </li>
+        {% endif %}
+        {% if item.children %}
+          {% include nav_list.html nav=item.children title=item.title %}
+        {% endif %}
+      {% endfor %}
+      <li class="nav__item">
+        <a href="https://github.com/spokerobotics/website" class="nav__link">
+          <span>GitHub</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+{% endif %}

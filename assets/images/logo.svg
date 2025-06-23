@@ -1,0 +1,39 @@
+<svg width="88" height="88" viewBox="0 0 88 88" xmlns="http://www.w3.org/2000/svg">
+  <title>SpokeRobotics Logo</title>
+  <g fill="none" fill-rule="evenodd">
+    <circle fill="#333" cx="44" cy="44" r="44"/>
+    <g transform="translate(44, 44)">
+      <g stroke="#FFF" stroke-width="4" stroke-linecap="round">
+        <g transform="rotate(0)">
+            <line x1="0" y1="14" x2="0" y2="24" />
+            <line x1="0" y1="28" x2="0" y2="40" />
+        </g>
+        <g transform="rotate(45)">
+            <line x1="0" y1="14" x2="0" y2="40" />
+        </g>
+        <g transform="rotate(90)">
+            <line x1="0" y1="14" x2="0" y2="24" />
+            <line x1="0" y1="28" x2="0" y2="40" />
+        </g>
+        <g transform="rotate(135)">
+            <line x1="0" y1="14" x2="0" y2="40" />
+        </g>
+        <g transform="rotate(180)">
+            <line x1="0" y1="14" x2="0" y2="24" />
+            <line x1="0" y1="28" x2="0" y2="40" />
+        </g>
+        <g transform="rotate(225)">
+            <line x1="0" y1="14" x2="0" y2="40" />
+        </g>
+        <g transform="rotate(270)">
+            <line x1="0" y1="14" x2="0" y2="24" />
+            <line x1="0" y1="28" x2="0" y2="40" />
+        </g>
+        <g transform="rotate(315)">
+            <line x1="0" y1="14" x2="0" y2="40" />
+        </g>
+      </g>
+      <circle fill="#FFF" cx="0" cy="0" r="10"/>
+    </g>
+  </g>
+</svg>
