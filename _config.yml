@@ -6,6 +6,24 @@
 remote_theme           : "mmistakes/minimal-mistakes@4.27.1"
 minimal_mistakes_skin    : "contrast" # "default", "air", "aqua", "contrast", "dark", "dirt", "neon", "mint", "plum", "sunrise"
 
+# Markdown settings
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    block: true
+    span: true
+    line_numbers: true
+    guess_lang: false
+    css_class: 'highlight'
+    inline_css: false
+    anchor_line_numbers: true
+    gutter: true
+    tab_width: 4
+    start_line: 1
+    end_line: nil
+
 # Site Settings
 locale                   : "en-US"
 title                    : "SpokeRobotics"
