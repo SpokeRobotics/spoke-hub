@@ -1,0 +1,8 @@
+# main links
+main:
+  - title: "Getting Started"
+    url: /getting-started/
+  - title: "Discussions"
+    url: https://github.com/spokerobotics/spoke-hub/discussions
+  - title: "GitHub"
+    url: https://github.com/spokerobotics/spoke-hub

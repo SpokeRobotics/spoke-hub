@@ -32,60 +32,14 @@ title_separator          : "-"
 name                     : "SpokeRobotics"
 description              : "Information, Tools and Libraries"
 url                      : https://spokerobotics.github.io
-baseurl                  : "/website"
-repository               : "spokerobotics/website"
+baseurl                  : "/spoke-hub"
+repository               : "spokerobotics/spoke-hub"
 teaser                   : # path of fallback teaser image, e.g. "/assets/images/500x300.png"
-logo                     : "/assets/images/logo.png"
+logo                     : "/assets/images/spoke_logo.png"
 masthead_title           : # overrides the website title displayed in the masthead, use " " for no title
 breadcrumbs              : true
 
 
-
-main:
-  - title: Home
-    url: /
-  - title: Getting Started
-    url: /getting-started/
-  - title: Frame
-    url: /frame/
-    children:
-      - title: Assembly Guide
-        url: /frame/assembly/
-      - title: Customization
-        url: /frame/customization/
-      - title: Specifications
-        url: /frame/specs/
-  - title: Electronics
-    url: /electronics/
-    children:
-      - title: Control System
-        url: /electronics/control/
-      - title: Sensors
-        url: /electronics/sensors/
-      - title: Power
-        url: /electronics/power/
-  - title: Mechanism
-    url: /mechanism/
-    children:
-      - title: Actuators
-        url: /mechanism/actuators/
-      - title: Joints
-        url: /mechanism/joints/
-      - title: Payload
-        url: /mechanism/payload/
-  - title: Device Network
-    url: /device-network/
-    children:
-      - title: Event Messaging
-        url: /device-network/events/
-      - title: Network Protocol
-        url: /device-network/protocol/
-  - title: Documentation
-    url: /docs/
-  - title: Community
-    url: /community/
-  - title: GitHub
-    url: https://github.com/spokerobotics/website
 words_per_minute         : 200
 comments:
   provider               : # false (default), "disqus", "discourse", "facebook", "staticman", "staticman_v2", "utterances", "custom"
@@ -305,8 +259,8 @@ whitelist:
 #  - Archive page should exist at path when using Liquid method or you can
 #    expect broken links (especially with breadcrumbs enabled)
 #  - <base_path>/tags/my-awesome-tag/index.html ~> path: /tags/
-#  - <base_path/categories/my-awesome-category/index.html ~> path: /categories/
-#  - <base_path/my-awesome-category/index.html ~> path: /
+#  - <base_path>/categories/my-awesome-category/index.html ~> path: /categories/
+#  - <base_path>/my-awesome-category/index.html ~> path: /
 category_archive:
   type: liquid
   path: /news/

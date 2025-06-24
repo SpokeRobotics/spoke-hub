@@ -18,6 +18,10 @@ toc_sticky: true
 
 {% include feature_row id="intro" %}
 
+## PLACEHOLDER
+
+<p style="font-size: 3em; color: red;">This is a placeholder doc site for an upcoming robotics system.</p>
+
 ## Latest Posts
 
 <div class="grid__wrapper">
@@ -142,12 +146,7 @@ Explore our detailed documentation for each component:
 
 ## Community
 
-Join our community to:
-
-- Share your projects
-- Get help from other builders
-- Contribute to the platform
-- Access support resources
+We're hosting discussions on [GitHub](https://github.com/spokerobotics/spoke-hub/discussions).  
 
 {% include feature_row id="community" %}
 

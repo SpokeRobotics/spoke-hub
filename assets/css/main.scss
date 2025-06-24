@@ -10,6 +10,17 @@ $max-width: 80%;
 @import "minimal-mistakes/skins/{{ site.minimal_mistakes_skin | default: 'default' }}"; // skin
 @import "minimal-mistakes"; // import everything else
 
-#latest-posts {
-  margin-bottom: 0.5em;
+/*
+ * Fix for post grid being pushed down by the sticky table of contents.
+ *
+ * The .grid__wrapper contains floated elements (.grid__item). When a floated
+ * element follows another floated element (the .sidebar__right ToC), it gets
+ * pushed down until it clears the first float.
+ *
+ * By setting `overflow: auto`, we establish a new block formatting context
+ * for the .grid__wrapper. This makes it contain its own floated children and
+ * prevents them from being affected by the floated sidebar.
+ */
+#latest-posts + .grid__wrapper {
+  overflow: auto;
 }
