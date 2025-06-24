@@ -20,7 +20,7 @@ toc_sticky: true
 
 ## PLACEHOLDER
 
-<p style="font-size: 3em; color: red;">This is a placeholder doc site for an upcoming robotics system.</p>
+<p style="font-size: 3em; color: red;">This is placeholder content.  Real soon.</p>
 
 ## Latest Posts
 
