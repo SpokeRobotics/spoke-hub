@@ -4,5 +4,7 @@ main:
     url: /getting-started/
   - title: "Discussions"
     url: https://github.com/spokerobotics/spoke-hub/discussions
+  - title: "Issues"
+    url: https://github.com/spokerobotics/spoke-hub/issues
   - title: "GitHub"
     url: https://github.com/spokerobotics/spoke-hub
