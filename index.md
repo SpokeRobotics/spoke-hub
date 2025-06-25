@@ -22,7 +22,7 @@ toc_sticky: true
 
 <p style="font-size: 3em; color: red;">This is placeholder content.  Real soon.</p>
 
-## Latest Posts
+## Latest News
 
 <div class="grid__wrapper">
   {% for post in site.posts %}
