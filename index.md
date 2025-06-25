@@ -49,18 +49,18 @@ The Spoke robot body is designed for modularity and ease of assembly. Key featur
 
 <div class="grid__wrapper">
   <div class="grid__item">
-    <a href="/external/spoke-body/body/">
-      <img src="{{ '/external/spoke-body/images/SpokeBotDualMotor_w_camera_2.png' | relative_url }}" alt="Spoke Body Design" style="width:100%; max-width: 200px; display: block; margin-left: auto; margin-right: auto; margin-bottom: 1em;">
+    <a href="{{ site.baseurl }}/spoke-body/body/">
+      <img src="{{ '/spoke-body/images/SpokeBotDualMotor_w_camera_2.png' | relative_url }}" alt="Spoke Body Design" style="width:100%; max-width: 200px; display: block; margin-left: auto; margin-right: auto; margin-bottom: 1em;">
     </a>
     <h3>Body Design</h3>
     <p>Learn about the Spoke Body design and components.</p>
-    <a href="/external/spoke-body/body/" class="btn">View Documentation</a>
+    <a href="{{ site.baseurl }}/spoke-body/body/" class="btn">View Documentation</a>
   </div>
   <div class="grid__item">
-    <img src="{{ '/assets/images/frame-custom.jpg' | relative_url }}" alt="Customized robot frame" style="width:100%; max-width: 200px; display: block; margin-left: auto; margin-right: auto; margin-bottom: 1em;">
+    <img src="{{ '/spoke-body/images/Design.png' | relative_url }}" alt="Customized robot frame" style="width:100%; max-width: 200px; display: block; margin-left: auto; margin-right: auto; margin-bottom: 1em;">
     <h3>Customization</h3>
     <p>Learn how to modify the body design.</p>
-    <a href="/external/spoke-body/body/" class="btn">Customization Guide</a>
+    <a href="/spoke-body/body/" class="btn">Customization Guide</a>
   </div>
 </div>
 <div style="clear: both;"></div>
