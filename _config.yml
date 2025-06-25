@@ -156,10 +156,10 @@ footer:
 
 defaults:
   - scope:
-      path: "external/spoke-body"
+      path: "spoke-body"
       type: "pages"
     values:
-      permalink: /external/spoke-body/:basename:output_ext
+      permalink: spoke-body/:basename:output_ext
       layout: single
       title: ""
       toc: true
