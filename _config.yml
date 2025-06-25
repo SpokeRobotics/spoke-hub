@@ -154,6 +154,19 @@ footer:
       icon: "fab fa-fw fa-github"
       url: https://github.com/spokerobotics
 
+defaults:
+  - scope:
+      path: "external/spoke-body"
+      type: "pages"
+    values:
+      permalink: /external/spoke-body/:basename:output_ext
+      layout: single
+      toc: true
+      toc_sticky: true
+
+# relative_links:
+#   enabled: true
+#   collections: false  # or true to include collection documents
 
 # Reading Files
 include:
@@ -286,18 +299,3 @@ compress_html:
   clippings: all
   ignore:
     envs: development
-
-
-# Defaults
-defaults:
-  # _posts
-  - scope:
-      path: ""
-      type: posts
-    values:
-      layout: single
-      author_profile: true
-      read_time: false
-      comments: # true
-      share: false
-      related: false

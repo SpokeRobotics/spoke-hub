@@ -39,25 +39,28 @@ Welcome to the Spoke Robotics documentation! Here you'll find everything you nee
 
 ## Core Components
 
-### Frame
-The Spoke robot frame is designed for modularity and ease of assembly. Key features:
+### [Body]({{ site.baseurl }}/external/spoke-body/spoke_body/)
+The Spoke robot body is designed for modularity and ease of assembly. Key features:
 
+- [Learn about the Spoke Body design]({{ site.baseurl }}/external/spoke-body/spoke_body/)
 - Lightweight aluminum construction
 - Interchangeable modules
 - Customizable mounting points
 
 <div class="grid__wrapper">
   <div class="grid__item">
-    <img src="{{ '/assets/images/frame-assembly.jpg' | relative_url }}" alt="A modular robot frame" style="width:100%; max-width: 200px; display: block; margin-left: auto; margin-right: auto; margin-bottom: 1em;">
-    <h3>Frame Assembly</h3>
-    <p>Step-by-step guide to building the robot frame.</p>
-    <a href="#" class="btn">Assembly Guide</a>
+    <a href="/external/spoke-body/body/">
+      <img src="{{ '/external/spoke-body/images/SpokeBotDualMotor_w_camera_2.png' | relative_url }}" alt="Spoke Body Design" style="width:100%; max-width: 200px; display: block; margin-left: auto; margin-right: auto; margin-bottom: 1em;">
+    </a>
+    <h3>Body Design</h3>
+    <p>Learn about the Spoke Body design and components.</p>
+    <a href="/external/spoke-body/body/" class="btn">View Documentation</a>
   </div>
   <div class="grid__item">
     <img src="{{ '/assets/images/frame-custom.jpg' | relative_url }}" alt="Customized robot frame" style="width:100%; max-width: 200px; display: block; margin-left: auto; margin-right: auto; margin-bottom: 1em;">
     <h3>Customization</h3>
-    <p>Learn how to modify the frame design.</p>
-    <a href="#" class="btn">Customization Options</a>
+    <p>Learn how to modify the body design.</p>
+    <a href="/external/spoke-body/body/" class="btn">Customization Guide</a>
   </div>
 </div>
 <div style="clear: both;"></div>
