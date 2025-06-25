@@ -39,22 +39,22 @@ Welcome to the Spoke Robotics documentation! Here you'll find everything you nee
 
 ## Core Components
 
-### [Body]({{ site.baseurl }}/spoke-body/spoke-body.html)
+### [Body](/spoke-body/spoke-body.html)
 The Spoke robot body is designed for modularity and ease of assembly. Key features:
 
-- [Learn about the Spoke Body design]({{ site.baseurl }}/spoke-body/spoke-body.html)
+- [Learn about the Spoke Body design](/spoke-body/spoke-body.html)
 - Lightweight aluminum construction
 - Interchangeable modules
 - Customizable mounting points
 
 <div class="grid__wrapper">
   <div class="grid__item">
-    <a href="{{ site.baseurl }}/spoke-body/body/">
+    <a href="/spoke-body/body/">
       <img src="{{ '/spoke-body/images/SpokeBotDualMotor_w_camera_2.png' | relative_url }}" alt="Spoke Body Design" style="width:100%; max-width: 200px; display: block; margin-left: auto; margin-right: auto; margin-bottom: 1em;">
     </a>
     <h3>Body Design</h3>
     <p>Learn about the Spoke Body design and components.</p>
-    <a href="{{ site.baseurl }}/spoke-body/body/" class="btn">View Documentation</a>
+    <a href="/spoke-body/body/" class="btn">View Documentation</a>
   </div>
   <div class="grid__item">
     <img src="{{ '/spoke-body/images/Design.png' | relative_url }}" alt="Customized robot frame" style="width:100%; max-width: 200px; display: block; margin-left: auto; margin-right: auto; margin-bottom: 1em;">

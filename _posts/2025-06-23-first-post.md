@@ -7,7 +7,7 @@ header:
   teaser: /assets/images/spoke_logo.png
 ---
 
-![Spoke Logo]({{site.baseurl}}/assets/images/spoke_logo.png)
+![Spoke Logo](/assets/images/spoke_logo.png)
 
 It was a difficult birth, but the Spoke Robotics Hub site is operating.
 
