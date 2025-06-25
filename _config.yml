@@ -161,6 +161,7 @@ defaults:
     values:
       permalink: /external/spoke-body/:basename:output_ext
       layout: single
+      title: ""
       toc: true
       toc_sticky: true
 
