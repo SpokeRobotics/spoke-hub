@@ -39,10 +39,10 @@ Welcome to the Spoke Robotics documentation! Here you'll find everything you nee
 
 ## Core Components
 
-### [Body]({{ site.baseurl }}/external/spoke-body/spoke_body/)
+### [Body]({{ site.baseurl }}/external/spoke-body/spoke-body/spoke-body.html)
 The Spoke robot body is designed for modularity and ease of assembly. Key features:
 
-- [Learn about the Spoke Body design]({{ site.baseurl }}/external/spoke-body/spoke_body/)
+- [Learn about the Spoke Body design]({{ site.baseurl }}/external/spoke-body/spoke_body/spoke-body.html)
 - Lightweight aluminum construction
 - Interchangeable modules
 - Customizable mounting points
