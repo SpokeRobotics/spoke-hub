@@ -1,0 +1,3 @@
+[submodule "external/spoke-body"]
+	path = external/spoke-body
+	url = git@github.com:SpokeRobotics/spoke-body.git
