@@ -18,9 +18,33 @@ toc_sticky: true
 
 {% include feature_row id="intro" %}
 
-## PLACEHOLDER
+## System Overview
 
-<p style="font-size: 3em; color: red;">This is placeholder content.  Real soon.</p>
+The Spoke Robotics platform is a comprehensive open-source robotics system designed for education and research. Our modular approach allows you to build, customize, and extend your robot according to your specific needs.
+
+<div class="grid__wrapper">
+  <div class="grid__item">
+    <img src="{{ '/assets/images/spoke_system_overview.png' | relative_url }}" alt="Spoke System Architecture" style="width:100%; max-width: 300px; display: block; margin-left: auto; margin-right: auto; margin-bottom: 1em;">
+    <h3>System Architecture</h3>
+    <p>Explore the complete Spoke robotics system architecture, including component relationships, assembly workflows, and development timelines.</p>
+    <a href="/spoke-overview/" class="btn btn--primary">View System Overview</a>
+  </div>
+  <div class="grid__item">
+    <img src="{{ '/assets/images/mermaid_diagram_preview.png' | relative_url }}" alt="Interactive Diagrams" style="width:100%; max-width: 300px; display: block; margin-left: auto; margin-right: auto; margin-bottom: 1em;">
+    <h3>Interactive Diagrams</h3>
+    <p>Visualize system components, workflows, and dependencies through interactive Mermaid diagrams that help you understand the platform.</p>
+    <a href="/spoke-overview/" class="btn btn--primary">Explore Diagrams</a>
+  </div>
+</div>
+<div style="clear: both;"></div>
+
+### Key Features
+
+- **Modular Design**: Mix and match components to create your ideal robot configuration
+- **Open Source**: Full access to designs, code, and documentation
+- **Educational Focus**: Perfect for learning robotics concepts and implementation
+- **Research Ready**: Extensible platform for advanced robotics research
+- **Visual Documentation**: Interactive diagrams and comprehensive guides
 
 ## Latest News
 

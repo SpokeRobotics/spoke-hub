@@ -2,6 +2,8 @@
 main:
   - title: "Getting Started"
     url: /getting-started/
+  - title: "Spoke Overview"
+    url: /spoke-overview/
   - title: "Discussions"
     url: https://github.com/spokerobotics/spoke-hub/discussions
   - title: "Issues"

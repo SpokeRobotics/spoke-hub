@@ -29,6 +29,24 @@
   </style>
 <![endif]-->
 
+{% if page.mermaid %}
+<!-- Mermaid.js for diagrams -->
+<script src="https://unpkg.com/mermaid@8.9.3/dist/mermaid.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: "default"
+  });
+  // Initialize mermaid on elements with class 'language-mermaid'
+  const mermaidElements = document.querySelectorAll('.language-mermaid');
+  if (mermaidElements.length > 0) {
+    mermaid.init(undefined, mermaidElements);
+  }
+});
+</script>
+{% endif %}
+
 {% if site.head_scripts %}
   {% for script in site.head_scripts %}
     {% if script contains "://" %}
