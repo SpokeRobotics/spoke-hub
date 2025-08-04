@@ -1,0 +1,141 @@
+---
+layout: single
+---
+
+<style>
+.section-container {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 30px;
+  align-items: start;
+  margin-bottom: 40px;
+}
+
+.section-content {
+  /* Text content for this section */
+}
+
+.section-images {
+  /* Images for this section */
+  text-align: center;
+}
+
+.section-images img {
+  width: 100%;
+  margin-bottom: 15px;
+  display: block;
+  max-width: 100%;
+}
+
+/* Hide original images */
+.original-content img {
+  display: none;
+}
+
+.section-title {
+  grid-column: 1 / -1;
+  margin-bottom: 20px;
+}
+</style>
+
+<div id="original-content" class="original-content">
+  {{ content }}
+</div>
+
+<div id="sectioned-content">
+  <!-- Sections will be generated here by JavaScript -->
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const originalContent = document.getElementById('original-content');
+  const sectionedContent = document.getElementById('sectioned-content');
+  
+  // Get all content elements
+  const contentElements = Array.from(originalContent.children);
+  
+  let currentSection = {
+    heading: null,
+    content: [],
+    images: []
+  };
+  
+  let sections = [];
+  
+  contentElements.forEach(function(element) {
+    // Check if this is a heading (new section)
+    if (element.tagName && element.tagName.match(/^H[1-6]$/)) {
+      // Save previous section if it has content
+      if (currentSection.heading || currentSection.content.length > 0) {
+        sections.push(currentSection);
+      }
+      
+      // Start new section
+      currentSection = {
+        heading: element.cloneNode(true),
+        content: [],
+        images: []
+      };
+    } else {
+      // Check if this element contains images
+      const images = element.querySelectorAll('img');
+      if (images.length > 0) {
+        images.forEach(function(img) {
+          currentSection.images.push(img.cloneNode(true));
+        });
+      }
+      
+      // Add non-image content to current section
+      const elementCopy = element.cloneNode(true);
+      // Remove images from the content copy
+      const imagesInCopy = elementCopy.querySelectorAll('img');
+      imagesInCopy.forEach(img => img.remove());
+      
+      // Only add if there's actual content left
+      if (elementCopy.textContent.trim() || elementCopy.children.length > 0) {
+        currentSection.content.push(elementCopy);
+      }
+    }
+  });
+  
+  // Add the last section
+  if (currentSection.heading || currentSection.content.length > 0) {
+    sections.push(currentSection);
+  }
+  
+  // Create individual two-column sections
+  sections.forEach(function(section) {
+    const sectionContainer = document.createElement('div');
+    sectionContainer.className = 'section-container';
+    
+    // Add heading if it exists
+    if (section.heading) {
+      const titleDiv = document.createElement('div');
+      titleDiv.className = 'section-title';
+      titleDiv.appendChild(section.heading);
+      sectionContainer.appendChild(titleDiv);
+    }
+    
+    // Create content column
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'section-content';
+    section.content.forEach(function(contentElement) {
+      contentDiv.appendChild(contentElement);
+    });
+    sectionContainer.appendChild(contentDiv);
+    
+    // Create images column
+    const imagesDiv = document.createElement('div');
+    imagesDiv.className = 'section-images';
+    section.images.forEach(function(img) {
+      imagesDiv.appendChild(img);
+    });
+    sectionContainer.appendChild(imagesDiv);
+    
+    sectionedContent.appendChild(sectionContainer);
+  });
+  
+  // Hide the original content
+  originalContent.style.display = 'none';
+});
+</script>
