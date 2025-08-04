@@ -5,15 +5,15 @@ permalink: /spoke-overview/
 mermaid: true
 ---
 
-# Spoke Robotics System Overview
-
 This page demonstrates Mermaid diagram capabilities for visualizing the Spoke robotics system architecture and workflows.
+
+Very terrible content, sadly.  But happily not the default color scheme
 
 ## System Architecture
 
-```mermaid
+```mermaid  
 graph TD
-    A[Spoke Hub] --> B[Spoke Body]
+    A[Spoke] --> B[Spoke Body]
     A --> C[Spoke Electronics]
     A --> D[Spoke Software]
     
