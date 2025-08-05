@@ -152,6 +152,19 @@ window.cascadeViewer = {
     }
     
     try {
+      // First try experimental direct capture approach
+      console.log('🧪 Trying experimental STEP capture first...');
+      const stepContent = this.testDirectSTEPCapture(this.currentModelData.shape, this.currentModelData.oc, filename);
+      
+      if (stepContent && stepContent.includes('STEP')) {
+        console.log('✅ Experimental capture successful! Downloading file...');
+        this.downloadFile(filename, stepContent, 'application/step');
+        console.log('✅ STEP export completed via experimental method:', filename);
+        return;
+      }
+      
+      // Fallback to original method if experimental fails
+      console.log('🔄 Experimental failed, falling back to original method...');
       this.generateSTEPContent(this.currentModelData.shape, this.currentModelData.oc, filename);
       console.log('✅ STEP export initiated:', filename);
     } catch (error) {
@@ -364,279 +377,315 @@ window.cascadeViewer = {
     );
   },
 
-  // Generate STEP content from OpenCascade shape
-  generateSTEPContent: function(shape, oc, filename) {
-    console.log('🔧 Generating STEP content from OpenCascade shape...');
-    
-    // First, let's debug what STEP-related classes are available
-    console.log('🔍 Checking available STEP classes in OpenCascade.js...');
-    const stepClasses = [];
-    for (let key in oc) {
-      if (key.includes('STEP') || key.includes('Step')) {
-        stepClasses.push(key);
-      }
-    }
-    console.log('📁 Available STEP classes:', stepClasses);
+  // EXPERIMENTAL: Test direct STEP data capture
+  testDirectSTEPCapture: function(shape, oc, filename) {
+    console.log('🧪 EXPERIMENTAL: Testing direct STEP data capture...');
     
     try {
-      // Try different approaches to create STEP writer
-      let stepWriter = null;
+      // Create STEP writer
+      const writer = new oc.STEPControl_Writer_1();
+      console.log('✅ STEP writer created');
       
-      // Method 1: Try direct instantiation with different constructors
-      const writerAttempts = [
-        () => new oc.STEPControl_Writer(),
-        () => new oc.STEPControl_Writer_1(),
-        () => new oc.STEPControl_Writer_2(),
-        () => oc.STEPControl_Writer(),
-        () => new oc.STEPCAFControl_Writer(),
-        () => new oc.STEPCAFControl_Writer_1(),
-        () => oc.STEPCAFControl_Writer()
-      ];
+      // Transfer shape
+      const transferResult = writer.Transfer(
+        shape,
+        oc.STEPControl_StepModelType.STEPControl_AsIs,
+        true
+      );
+      console.log('✅ Shape transferred:', transferResult);
       
-      for (let i = 0; i < writerAttempts.length; i++) {
-        try {
-          stepWriter = writerAttempts[i]();
-          console.log(`✅ STEP writer created using method ${i + 1}`);
-          break;
-        } catch (e) {
-          console.log(`❌ Method ${i + 1} failed:`, e.message);
-        }
+      // Test 1: Try to capture data before writing to file
+      console.log('🧪 Test 1: Checking writer internal data...');
+      console.log('Writer properties:', Object.getOwnPropertyNames(writer));
+      
+      // Test 2: Try writing to a very simple filename
+      console.log('🧪 Test 2: Writing to simple filename...');
+      const simpleFile = 'test.step';
+      const writeResult = writer.Write(simpleFile);
+      console.log('Write result:', writeResult);
+      
+      // Test 3: Try different file reading approaches
+      console.log('🧪 Test 3: Trying different read approaches...');
+      
+      // Approach A: Direct path
+      try {
+        const content1 = oc.FS.readFile(simpleFile, { encoding: 'utf8' });
+        console.log('✅ Direct path read successful:', content1.length, 'bytes');
+        return content1;
+      } catch (e) {
+        console.log('❌ Direct path failed:', e.message);
       }
       
-      // Method 2: Try using Handle pattern (common in OpenCascade)
-      if (!stepWriter) {
-        try {
-          if (oc.Handle_STEPControl_Writer) {
-            const handle = new oc.Handle_STEPControl_Writer();
-            stepWriter = handle.get ? handle.get() : handle;
-            console.log('✅ STEP writer created using Handle pattern');
-          }
-        } catch (e) {
-          console.log('❌ Handle pattern failed:', e.message);
-        }
+      // Approach B: Root path
+      try {
+        const content2 = oc.FS.readFile('/' + simpleFile, { encoding: 'utf8' });
+        console.log('✅ Root path read successful:', content2.length, 'bytes');
+        return content2;
+      } catch (e) {
+        console.log('❌ Root path failed:', e.message);
       }
       
-      // Method 3: Try factory methods or static constructors
-      if (!stepWriter) {
-        const factoryMethods = [
-          () => oc.STEPControl_Writer.Create ? oc.STEPControl_Writer.Create() : null,
-          () => oc.STEPControl_Writer.New ? oc.STEPControl_Writer.New() : null,
-          () => oc.STEPCAFControl_Writer.Create ? oc.STEPCAFControl_Writer.Create() : null
-        ];
+      // Approach C: List all files and find any STEP-like content
+      try {
+        const allFiles = oc.FS.readdir('/');
+        console.log('📁 All files in root:', allFiles);
         
-        for (let i = 0; i < factoryMethods.length; i++) {
-          try {
-            const result = factoryMethods[i]();
-            if (result) {
-              stepWriter = result;
-              console.log(`✅ STEP writer created using factory method ${i + 1}`);
-              break;
+        for (const file of allFiles) {
+          if (typeof file === 'string' && file.length > 0) {
+            try {
+              const testContent = oc.FS.readFile('/' + file, { encoding: 'utf8' });
+              if (testContent.includes('STEP') || testContent.includes('FILE_DESCRIPTION')) {
+                console.log('✅ Found STEP content in file:', file, testContent.length, 'bytes');
+                return testContent;
+              }
+            } catch (readErr) {
+              // Ignore read errors for non-text files
             }
-          } catch (e) {
-            console.log(`❌ Factory method ${i + 1} failed:`, e.message);
           }
         }
+      } catch (e) {
+        console.log('❌ Directory listing failed:', e.message);
       }
       
-      // Method 4: Check if we need to use a different API altogether
-      if (!stepWriter) {
-        console.log('🔍 Checking for alternative STEP export APIs...');
-        const alternativeAPIs = [];
-        for (let key in oc) {
-          if ((key.includes('STEP') || key.includes('Step')) && 
-              (key.includes('Write') || key.includes('Export') || key.includes('Save'))) {
-            alternativeAPIs.push(key);
-          }
+      throw new Error('All experimental approaches failed');
+      
+    } catch (error) {
+      console.error('🧪 Experimental capture failed:', error);
+      throw error;
+    }
+  },
+
+  // Generate STEP content from OpenCascade shape using research-based approach
+  generateSTEPContent: function(shape, oc, filename) {
+    console.log('🔧 Generating STEP content using research-based approach...');
+    
+    try {
+      // Create STEP writer using the working pattern from Stack Overflow
+      console.log('🔧 Creating STEPControl_Writer_1...');
+      const writer = new oc.STEPControl_Writer_1();
+      console.log('✅ STEP writer created successfully');
+      
+      // Debug what progress range classes are available
+      console.log('🔍 Checking available Message/Progress classes...');
+      const progressClasses = [];
+      for (let key in oc) {
+        if (key.includes('Message') || key.includes('Progress')) {
+          progressClasses.push(key);
         }
-        console.log('📁 Alternative STEP APIs found:', alternativeAPIs);
-        
-        // Try using IGESControl_Writer as a template for the correct pattern
-        if (oc.IGESControl_Writer) {
-          try {
-            console.log('🔍 Trying IGES writer pattern for STEP...');
-            // If IGES writer works, we can use the same pattern
-            const testWriter = new oc.IGESControl_Writer();
-            console.log('✅ IGES writer pattern works, but no equivalent STEP pattern found');
-          } catch (e) {
-            console.log('❌ IGES writer pattern also fails:', e.message);
-          }
-        }
       }
+      console.log('📁 Available progress classes:', progressClasses);
       
-      if (!stepWriter) {
-        throw new Error('No STEP writer class found in OpenCascade.js');
-      }
-      
-      // Try to set precision if method exists
-      if (typeof stepWriter.SetPrecision === 'function') {
-        stepWriter.SetPrecision(0.01);
-        console.log('✅ Precision set to 0.01');
-      }
-      
-      // Transfer the shape to the STEP writer
-      console.log('📦 Transferring shape to STEP writer...');
-      
-      // Try different transfer methods with correct number of arguments
+      // Try different approaches for the Transfer method
+      console.log('📦 Attempting Transfer with different progress parameters...');
       let transferResult = null;
-      if (typeof stepWriter.Transfer === 'function') {
-        // The Transfer method expects 3 arguments based on the error message
-        const transferAttempts = [
-          // Try with 3 arguments: shape, mode, compgraph
-          () => stepWriter.Transfer(shape, oc.STEPControl_StepModelType?.STEPControl_AsIs || 0, false),
-          () => stepWriter.Transfer(shape, 0, false), // AsIs mode = 0
-          () => stepWriter.Transfer(shape, 1, false), // ManifoldSolidBrep mode = 1
-          () => stepWriter.Transfer(shape, 2, false), // BrepWithVoids mode = 2
-          // Try with different third parameter
-          () => stepWriter.Transfer(shape, 0, true),
-          () => stepWriter.Transfer(shape, 0, 0),
-          () => stepWriter.Transfer(shape, 0, 1)
+      
+      // Attempt 1: Try without progress parameter (3 arguments)
+      try {
+        console.log('🔄 Attempt 1: Transfer with 3 arguments (no progress)');
+        transferResult = writer.Transfer(
+          shape,
+          oc.STEPControl_StepModelType.STEPControl_AsIs,
+          true
+        );
+        console.log('✅ Transfer successful with 3 arguments');
+      } catch (e) {
+        console.log('❌ 3-argument transfer failed:', e.message);
+        
+        // Attempt 2: Try with different progress class constructors
+        const progressAttempts = [
+          () => new oc.Message_ProgressRange(),
+          () => new oc.Message_ProgressRange_1(),
+          () => new oc.Message_ProgressRange_2(),
+          () => oc.Message_ProgressRange_1 ? oc.Message_ProgressRange_1() : null,
+          () => null // Try with null progress
         ];
         
-        for (let i = 0; i < transferAttempts.length; i++) {
+        for (let i = 0; i < progressAttempts.length; i++) {
           try {
-            transferResult = transferAttempts[i]();
-            console.log(`✅ Transfer successful using attempt ${i + 1}`);
+            const progressObj = progressAttempts[i]();
+            console.log(`🔄 Attempt ${i + 2}: Transfer with progress attempt ${i + 1}`);
+            transferResult = writer.Transfer(
+              shape,
+              oc.STEPControl_StepModelType.STEPControl_AsIs,
+              true,
+              progressObj
+            );
+            console.log(`✅ Transfer successful with progress attempt ${i + 1}`);
             break;
-          } catch (e) {
-            console.log(`❌ Transfer attempt ${i + 1} failed:`, e.message);
+          } catch (progressError) {
+            console.log(`❌ Progress attempt ${i + 1} failed:`, progressError.message);
           }
         }
-        
-        if (transferResult === null) {
-          throw new Error('All transfer attempts failed');
+      }
+      
+      if (transferResult === null) {
+        throw new Error('All Transfer attempts failed');
+      }
+      
+      // Try different approaches to get STEP data directly
+      console.log('🔄 Attempting direct STEP export approaches...');
+      let stepContent = null;
+      
+      // Approach 1: Try WriteStream if available
+      console.log('🔄 Approach 1: Checking for WriteStream method...');
+      if (typeof writer.WriteStream === 'function') {
+        console.log('✅ WriteStream method found, attempting direct stream export...');
+        try {
+          // This would be ideal but may not be available in OpenCascade.js
+          stepContent = writer.WriteStream();
+          console.log('✅ WriteStream successful!');
+        } catch (e) {
+          console.log('❌ WriteStream failed:', e.message);
         }
       } else {
-        throw new Error('Transfer method not available on STEP writer');
+        console.log('❌ WriteStream method not available');
       }
       
-      // Check transfer result if we have the enum
-      if (oc.IFSelect_ReturnStatus && transferResult !== oc.IFSelect_ReturnStatus.IFSelect_RetDone) {
-        throw new Error(`Failed to transfer shape to STEP writer (result: ${transferResult})`);
-      }
-      
-      console.log('✅ Shape transferred successfully to STEP writer');
-      
-      // Try different file paths and write methods
-      const possiblePaths = [
-        '/tmp/' + filename,
-        filename,
-        '/' + filename,
-        '/home/' + filename
-      ];
-      
-      let writeResult = null;
-      let tempFilePath = null;
-      
-      // Create temp directory if it doesn't exist
-      try {
-        oc.FS.mkdir('/tmp');
-        console.log('✅ /tmp directory created/exists');
-      } catch (e) {
-        console.log('⚠️ /tmp directory issue:', e.message);
-      }
-      
-      // Try writing to different paths
-      for (let i = 0; i < possiblePaths.length; i++) {
-        const testPath = possiblePaths[i];
-        console.log(`💾 Attempting to write STEP file to: ${testPath}`);
-        
+      // Approach 2: Try accessing the Model with proper arguments
+      if (!stepContent) {
+        console.log('🔄 Approach 2: Attempting to access Model data with arguments...');
         try {
-          if (typeof stepWriter.Write === 'function') {
-            writeResult = stepWriter.Write(testPath);
-            tempFilePath = testPath;
-            console.log(`💾 Write method returned:`, writeResult, 'Type:', typeof writeResult);
+          // Model() might need a boolean argument
+          const model = writer.Model(true);
+          if (model) {
+            console.log('✅ Model object retrieved with argument');
             
-            // Check if file was created immediately after write
-            try {
-              const fileStats = oc.FS.stat(testPath);
-              if (fileStats && fileStats.size > 0) {
-                console.log(`✅ File created successfully at ${testPath} (${fileStats.size} bytes)`);
-                break; // Success! Use this path
-              } else {
-                console.log(`❌ File at ${testPath} is empty or invalid`);
+            // Try different methods directly (Emscripten objects don't show methods in getOwnPropertyNames)
+            const methodsToTry = [
+              { name: 'WriteString', args: [] },
+              { name: 'ToString', args: [] },
+              { name: 'Print', args: [] },
+              { name: 'Dump', args: [] },
+              { name: 'WriteStep', args: [] },
+              { name: 'WriteFile', args: ['temp.step'] }
+            ];
+            
+            for (const methodInfo of methodsToTry) {
+              try {
+                console.log(`🔄 Trying Model.${methodInfo.name}(${methodInfo.args.join(', ')})...`);
+                const result = model[methodInfo.name](...methodInfo.args);
+                if (result && typeof result === 'string' && result.length > 100) {
+                  stepContent = result;
+                  console.log(`✅ Model.${methodInfo.name}() successful! (${stepContent.length} bytes)`);
+                  break;
+                } else if (result) {
+                  console.log(`📊 Model.${methodInfo.name}() returned:`, typeof result, result);
+                }
+              } catch (methodError) {
+                console.log(`❌ Model.${methodInfo.name}() failed:`, methodError.message);
               }
-            } catch (statError) {
-              console.log(`❌ File does not exist at ${testPath}:`, statError.message);
             }
-          } else {
-            console.log('❌ Write method not available on STEP writer');
-            break;
-          }
-        } catch (writeError) {
-          console.log(`❌ Write failed for path ${testPath}:`, writeError.message);
-        }
-      }
-      
-      if (!tempFilePath) {
-        throw new Error('All write attempts failed - no valid file path found');
-      }
-      
-      // Debug the return status enum values
-      if (oc.IFSelect_ReturnStatus) {
-        console.log('🔍 Available return status values:');
-        for (let key in oc.IFSelect_ReturnStatus) {
-          console.log(`  ${key}: ${oc.IFSelect_ReturnStatus[key]}`);
-        }
-      }
-      
-      // Try different ways to check if write was successful
-      let writeSuccessful = false;
-      
-      // Method 1: Check against enum if available (compare object values)
-      if (oc.IFSelect_ReturnStatus) {
-        // For OpenCascade.js enums that are objects, compare their value property
-        const expectedValue = oc.IFSelect_ReturnStatus.IFSelect_RetDone;
-        if (writeResult && expectedValue && 
-            ((writeResult.value !== undefined && expectedValue.value !== undefined && writeResult.value === expectedValue.value) ||
-             (writeResult.toString() === expectedValue.toString()))) {
-          writeSuccessful = true;
-          console.log('✅ Write successful (enum object check)');
-        } else {
-          console.log(`⚠️ Write result comparison failed`);
-          console.log('  writeResult:', writeResult, writeResult?.value, writeResult?.toString());
-          console.log('  expected:', expectedValue, expectedValue?.value, expectedValue?.toString());
-        }
-      }
-      
-      // Method 2: Check if result is truthy or specific value
-      if (!writeSuccessful) {
-        if (writeResult === true || writeResult === 1 || writeResult === 0) {
-          writeSuccessful = true;
-          console.log('✅ Write successful (value check)');
-        }
-      }
-      
-      // Method 3: Check if file was actually created (most reliable)
-      if (!writeSuccessful) {
-        try {
-          const fileStats = oc.FS.stat(tempFilePath);
-          if (fileStats && fileStats.size > 0) {
-            writeSuccessful = true;
-            console.log(`✅ Write successful (file exists, ${fileStats.size} bytes)`);
           }
         } catch (e) {
-          console.log('❌ File does not exist after write');
+          console.log('❌ Model access failed:', e.message);
         }
       }
       
-      if (!writeSuccessful) {
-        throw new Error(`STEP file write may have failed (result: ${writeResult})`);
+      // Approach 3: Try accessing WorkSession data
+      if (!stepContent) {
+        console.log('🔄 Approach 3: Attempting to access WorkSession data...');
+        try {
+          const workSession = writer.WS();
+          if (workSession) {
+            console.log('✅ WorkSession object retrieved');
+            
+            // Try different WorkSession methods directly
+            const wsMethods = [
+              { name: 'Model', args: [] },
+              { name: 'PrintTransferInfo', args: [] },
+              { name: 'MapWriter', args: [] }
+            ];
+            
+            for (const methodInfo of wsMethods) {
+              try {
+                console.log(`🔄 Trying WorkSession.${methodInfo.name}()...`);
+                const wsResult = workSession[methodInfo.name](...methodInfo.args);
+                if (wsResult) {
+                  console.log(`✅ WorkSession.${methodInfo.name}() returned object`);
+                  
+                  // If we got a model-like object, try to get STEP data from it
+                  if (methodInfo.name === 'Model' || methodInfo.name === 'MapWriter') {
+                    const modelMethods = ['WriteString', 'ToString', 'Print', 'WriteStep'];
+                    for (const modelMethod of modelMethods) {
+                      try {
+                        console.log(`🔄 Trying ${methodInfo.name}.${modelMethod}()...`);
+                        const modelResult = wsResult[modelMethod]();
+                        if (modelResult && typeof modelResult === 'string' && modelResult.length > 100) {
+                          stepContent = modelResult;
+                          console.log(`✅ ${methodInfo.name}.${modelMethod}() successful! (${stepContent.length} bytes)`);
+                          break;
+                        }
+                      } catch (modelError) {
+                        console.log(`❌ ${methodInfo.name}.${modelMethod}() failed:`, modelError.message);
+                      }
+                    }
+                    if (stepContent) break;
+                  }
+                }
+              } catch (wsError) {
+                console.log(`❌ WorkSession.${methodInfo.name}() failed:`, wsError.message);
+              }
+            }
+          }
+        } catch (e) {
+          console.log('❌ WorkSession access failed:', e.message);
+        }
       }
       
-      console.log('✅ STEP file written successfully');
-      
-      // Read the file content from OpenCascade.js virtual filesystem
-      const stepContent = oc.FS.readFile(tempFilePath, { encoding: 'utf8' });
-      
-      if (!stepContent || stepContent.length < 100) {
-        throw new Error('STEP file content is empty or too small');
+      // Approach 4: Try with a simple filename and virtual filesystem
+      if (!stepContent) {
+        console.log('🔄 Approach 4: Simple filename virtual filesystem approach...');
+        const simpleFilename = 'export.step';
+        try {
+          console.log('💾 Writing with simple filename:', simpleFilename);
+          writer.Write(simpleFilename);
+          
+          // Try to read immediately
+          stepContent = oc.FS.readFile('/' + simpleFilename, { encoding: 'utf8' });
+          console.log(`✅ Simple filename approach successful! (${stepContent.length} bytes)`);
+        } catch (e) {
+          console.log('❌ Simple filename approach failed:', e.message);
+          
+          // Last resort: check what files actually exist and try to read them
+          try {
+            const files = oc.FS.readdir('/');
+            console.log('📁 Available files after write:', files);
+            
+            // Try to read any file that might be the STEP file (including empty names)
+            for (const file of files) {
+              if (typeof file === 'string' && (file.includes('step') || file.includes('stp') || file === '')) {
+                try {
+                  const filePath = file === '' ? '/' : '/' + file;
+                  stepContent = oc.FS.readFile(filePath, { encoding: 'utf8' });
+                  if (stepContent && stepContent.includes('STEP')) {
+                    console.log(`✅ Found and read STEP file: "${file}" (${stepContent.length} bytes)`);
+                    break;
+                  }
+                } catch (readError) {
+                  console.log(`❌ Could not read "${file}":`, readError.message);
+                }
+              }
+            }
+          } catch (dirError) {
+            console.log('❌ Could not list directory:', dirError.message);
+          }
+        }
       }
+      
+      if (!stepContent) {
+        throw new Error('All STEP export approaches failed');
+      }
+      
+      // Download the file
+      this.downloadFile(filename, stepContent, 'application/step');
+      console.log('✅ Research-based STEP file exported:', filename);
       
       // Clean up the temporary file
       try {
-        oc.FS.unlink(tempFilePath);
+        oc.FS.unlink('/' + filename);
+        console.log('✅ Temporary file cleaned up');
       } catch (cleanupError) {
-        console.warn('⚠️ Could not clean up temporary file:', cleanupError);
+        console.warn('⚠️ Could not clean up temporary file:', cleanupError.message);
       }
       
       // Download the STEP file
@@ -644,10 +693,10 @@ window.cascadeViewer = {
       console.log(`✅ STEP file exported successfully: ${filename} (${stepContent.length} bytes)`);
       
     } catch (error) {
-      console.error('❌ Error in STEP generation:', error);
+      console.error('❌ Error in research-based STEP generation:', error);
       
       // Fallback: Try alternative STEP export method
-      console.log('🔄 Attempting alternative STEP export method...');
+      console.log('🔄 Attempting fallback STEP export method...');
       try {
         this.generateSTEPContentFallback(shape, oc, filename);
       } catch (fallbackError) {
