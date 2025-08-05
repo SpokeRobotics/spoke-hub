@@ -75,7 +75,7 @@ After including this, you can:
     </span>
     
     <button id="{{ include.container_id | default: 'ocjs-viewer' }}-spin-toggle" style="margin: 0 5px; padding: 8px 16px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">SPIN: ON</button>
-    <button id="{{ include.container_id | default: 'ocjs-viewer' }}-frame-toggle" style="margin: 0 5px; padding: 8px 16px; background: #ffc107; color: black; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">FRAME: LIGHT</button>
+    <button id="{{ include.container_id | default: 'ocjs-viewer' }}-frame-toggle" style="margin: 0 5px; padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">FRAME: HIDE</button>
     <button id="{{ include.container_id | default: 'ocjs-viewer' }}-shading-toggle" style="margin: 0 5px; padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">SHADING: GRAY</button>
   </div>
   
@@ -157,7 +157,7 @@ window.cascadeViewer = {
   spinEnabled: true,
 
   // Frame rendering mode - HIDE, LIGHT, DARK
-  frameMode: 'LIGHT',
+  frameMode: 'HIDE',
 
   // Shading mode - BLACK, GRAY, OFF
   shadingMode: 'GRAY',
@@ -266,15 +266,15 @@ window.cascadeViewer = {
     console.log(`🔺 Frame rendering: ${this.frameMode}`);
   },
 
-  // Toggle shading mode: BLACK -> GRAY -> OFF -> BLACK
+  // Toggle shading mode: GRAY -> BLACK -> OFF -> GRAY
   toggleShading: function(containerId) {
     // Cycle through the three states
-    if (this.shadingMode === 'BLACK') {
-      this.shadingMode = 'GRAY';
-    } else if (this.shadingMode === 'GRAY') {
+    if (this.shadingMode === 'GRAY') {
+      this.shadingMode = 'BLACK';
+    } else if (this.shadingMode === 'BLACK') {
       this.shadingMode = 'OFF';
     } else {
-      this.shadingMode = 'BLACK';
+      this.shadingMode = 'GRAY';
     }
     
     const shadingBtn = document.getElementById(containerId + '-shading-toggle');
@@ -354,7 +354,7 @@ window.cascadeViewer = {
               child.material.transparent = false;
             } else { // GRAY
               // Gray shading
-              child.material.color.setHex(0x808080); // Medium gray
+              child.material.color.setHex(0xE0E0E0); // Light gray
               child.material.opacity = 1.0;
               child.material.transparent = false;
             }
@@ -928,6 +928,12 @@ window.cascadeViewer = {
             window.cadModel = model;
             window.cadWireframe = line;
             console.log('✅ Wireframe overlay added');
+            
+            // Apply initial frame mode (HIDE by default)
+            window.cascadeViewer.updateFrameRendering(containerId);
+            
+            // Apply initial shading mode (GRAY by default)
+            window.cascadeViewer.updateShading(containerId);
           }
         });
         
@@ -1058,6 +1064,12 @@ window.cascadeViewer = {
     // Store references for animation
     window.cadModel = mesh;
     window.cadWireframe = line;
+    
+    // Apply initial frame mode (HIDE by default)
+    this.updateFrameRendering(containerId);
+    
+    // Apply initial shading mode (GRAY by default)
+    this.updateShading(containerId);
     
     // Animation loop
     function animate() {
@@ -1194,10 +1206,16 @@ window.cascadeViewer = {
         enableLiveAutocompletion: true
       });
       
-      // Add keyboard shortcut for running code (Ctrl+Enter)
+      // Add keyboard shortcuts for running code (Ctrl+Enter and Ctrl+S)
       editor.commands.addCommand({
         name: 'runCode',
         bindKey: {win: 'Ctrl-Enter', mac: 'Cmd-Enter'},
+        exec: () => this.runCodeFromEditor(containerId)
+      });
+      
+      editor.commands.addCommand({
+        name: 'runCodeSave',
+        bindKey: {win: 'Ctrl-S', mac: 'Cmd-S'},
         exec: () => this.runCodeFromEditor(containerId)
       });
       
