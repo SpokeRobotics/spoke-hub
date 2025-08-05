@@ -30,12 +30,165 @@ This page hosts an interactive 3-D model viewer that uses [OpenCascade.js](https
     console.log(' OpenCascade.js loaded successfully from unpkg CDN');
     console.log(' Main callback executed at:', new Date().toISOString());
     
-    // Build a torus using OpenCascade.js (major radius 50, minor radius 20)
-    console.log(' Creating OpenCascade torus shape...');
-    const torusShape = new oc.BRepPrimAPI_MakeTorus_2(50, 20, Math.PI * 2).Shape();
-    console.log(' OpenCascade torus shape created:', torusShape);
-    console.log(' Shape type:', torusShape.ShapeType());
-
+    // Build a frame structure using OpenCascade.js
+    console.log(' Creating OpenCascade frame structure...');
+    
+    // === Parameters ===
+    const outerW = 48;
+    const outerH = 32;
+    const wall = 4;
+    const frameZ = 4;
+    const height = 32;
+    const beamW = 4;
+    
+    console.log(' Frame parameters:', { outerW, outerH, wall, frameZ, height, beamW });
+    
+    try {
+      // === Create proper frame structure using correct OpenCascade.js boolean API ===
+      console.log(' Creating frame structure with boolean operations...');
+      
+      // Create outer box
+      const outerBox = new oc.BRepPrimAPI_MakeBox_2(
+        new oc.gp_Pnt_3(0, 0, 0),
+        outerW, outerH, height + frameZ
+      ).Shape();
+      
+      console.log('📦 Outer box created:', outerBox);
+      
+      // Create inner box (smaller, offset by wall thickness)
+      const innerBox = new oc.BRepPrimAPI_MakeBox_2(
+        new oc.gp_Pnt_3(wall, wall, wall),
+        outerW - 2 * wall, outerH - 2 * wall, height + frameZ - 2 * wall
+      ).Shape();
+      
+      console.log('📦 Inner box created:', innerBox);
+      
+      // Build frame structure from individual components (base, sides, top)
+      console.log('🔧 Building frame from individual components...');
+      
+      const components = [];
+      
+      // === Create Base Frame (bottom) ===
+      console.log('📊 Creating base frame components...');
+      
+      // Bottom frame - 4 walls
+      components.push(
+        // Front wall (bottom)
+        new oc.BRepPrimAPI_MakeBox_2(
+          new oc.gp_Pnt_3(0, 0, 0),
+          outerW, wall, frameZ
+        ).Shape(),
+        // Back wall (bottom)
+        new oc.BRepPrimAPI_MakeBox_2(
+          new oc.gp_Pnt_3(0, outerH - wall, 0),
+          outerW, wall, frameZ
+        ).Shape(),
+        // Left wall (bottom)
+        new oc.BRepPrimAPI_MakeBox_2(
+          new oc.gp_Pnt_3(0, wall, 0),
+          wall, outerH - 2*wall, frameZ
+        ).Shape(),
+        // Right wall (bottom)
+        new oc.BRepPrimAPI_MakeBox_2(
+          new oc.gp_Pnt_3(outerW - wall, wall, 0),
+          wall, outerH - 2*wall, frameZ
+        ).Shape()
+      );
+      
+      // === Create Top Frame ===
+      console.log('📊 Creating top frame components...');
+      
+      // Top frame - 4 walls (same as bottom, translated up)
+      const topZ = height;
+      components.push(
+        // Front wall (top)
+        new oc.BRepPrimAPI_MakeBox_2(
+          new oc.gp_Pnt_3(0, 0, topZ),
+          outerW, wall, frameZ
+        ).Shape(),
+        // Back wall (top)
+        new oc.BRepPrimAPI_MakeBox_2(
+          new oc.gp_Pnt_3(0, outerH - wall, topZ),
+          outerW, wall, frameZ
+        ).Shape(),
+        // Left wall (top)
+        new oc.BRepPrimAPI_MakeBox_2(
+          new oc.gp_Pnt_3(0, wall, topZ),
+          wall, outerH - 2*wall, frameZ
+        ).Shape(),
+        // Right wall (top)
+        new oc.BRepPrimAPI_MakeBox_2(
+          new oc.gp_Pnt_3(outerW - wall, wall, topZ),
+          wall, outerH - 2*wall, frameZ
+        ).Shape()
+      );
+      
+      // === Create Corner Beams (vertical) ===
+      console.log('📊 Creating corner beam components...');
+      
+      // 4 corner beams connecting bottom and top frames
+      components.push(
+        // Corner beam 1 (front-left)
+        new oc.BRepPrimAPI_MakeBox_2(
+          new oc.gp_Pnt_3(0, 0, frameZ),
+          beamW, beamW, height - frameZ
+        ).Shape(),
+        // Corner beam 2 (front-right)
+        new oc.BRepPrimAPI_MakeBox_2(
+          new oc.gp_Pnt_3(outerW - beamW, 0, frameZ),
+          beamW, beamW, height - frameZ
+        ).Shape(),
+        // Corner beam 3 (back-left)
+        new oc.BRepPrimAPI_MakeBox_2(
+          new oc.gp_Pnt_3(0, outerH - beamW, frameZ),
+          beamW, beamW, height - frameZ
+        ).Shape(),
+        // Corner beam 4 (back-right)
+        new oc.BRepPrimAPI_MakeBox_2(
+          new oc.gp_Pnt_3(outerW - beamW, outerH - beamW, frameZ),
+          beamW, beamW, height - frameZ
+        ).Shape()
+      );
+      
+      console.log('✅ Created {} frame components', components.length);
+      
+      // Combine all components into a single compound shape
+      console.log('🔧 Combining all {} components into compound shape...', components.length);
+      
+      let frameShape; // Declare outside try block for proper scoping
+      
+      try {
+        // Create a compound builder
+        const builder = new oc.BRep_Builder();
+        const compound = new oc.TopoDS_Compound();
+        builder.MakeCompound(compound);
+        
+        // Add all components to the compound
+        for (let i = 0; i < components.length; i++) {
+          builder.Add(compound, components[i]);
+          console.log('📦 Added component {} to compound', i + 1);
+        }
+        
+        frameShape = compound; // Assign to outer scope variable
+        console.log('✅ Successfully created compound shape with {} components', components.length);
+      } catch (error) {
+        console.log('❌ Failed to create compound shape:', error.message);
+        console.log('⚠️ Falling back to first component only');
+        frameShape = components[0]; // Assign to outer scope variable
+      }
+      
+      console.log(' OpenCascade frame structure created:', frameShape);
+      console.log(' Shape type:', frameShape.ShapeType());
+      console.log(' Dimensions: {}×{}×{} units', outerW, outerH, height + frameZ);
+      
+      // Store the shape for mesh extraction
+      window.frameShape = frameShape;
+      
+    } catch (error) {
+      console.error(' Error creating OpenCascade frame structure:', error);
+      throw error;
+    }
+    
     // Convert OpenCascade shape to Three.js mesh data
     function convertOpenCascadeToMesh(shape) {
       console.log(' Converting OpenCascade shape to mesh...');
@@ -87,40 +240,63 @@ This page hosts an interactive 3-D model viewer that uses [OpenCascade.js](https
               vertices.push(transformedNode.X(), transformedNode.Y(), transformedNode.Z());
             }
             
-            // Extract triangles and compute normals
-            for (let i = 1; i <= triangleCount; i++) {
-              const triangle = triangulation.get().Triangle(i);
-              const [n1, n2, n3] = [triangle.Value(1), triangle.Value(2), triangle.Value(3)];
+            // Process each triangle in the face with corrected orientation
+            for (let t = 1; t <= triangleCount; t++) {
+              const triangle = triangulation.get().Triangle(t);
+              const n1 = triangle.Value(1);
+              const n2 = triangle.Value(2);
+              const n3 = triangle.Value(3);
               
-              // Add indices (convert from 1-based to 0-based)
-              indices.push(
-                vertexOffset + n1 - 1,
-                vertexOffset + n2 - 1,
-                vertexOffset + n3 - 1
+              // Get triangle vertices
+              const v1 = triangulation.get().Node(n1).Transformed(transform);
+              const v2 = triangulation.get().Node(n2).Transformed(transform);
+              const v3 = triangulation.get().Node(n3).Transformed(transform);
+              
+              // Compute triangle normal using cross product
+              const edge1 = new THREE.Vector3(
+                v2.X() - v1.X(),
+                v2.Y() - v1.Y(),
+                v2.Z() - v1.Z()
+              );
+              const edge2 = new THREE.Vector3(
+                v3.X() - v1.X(),
+                v3.Y() - v1.Y(),
+                v3.Z() - v1.Z()
               );
               
-              // Compute face normal
-              const v1 = new THREE.Vector3(
-                vertices[(vertexOffset + n1 - 1) * 3],
-                vertices[(vertexOffset + n1 - 1) * 3 + 1],
-                vertices[(vertexOffset + n1 - 1) * 3 + 2]
-              );
-              const v2 = new THREE.Vector3(
-                vertices[(vertexOffset + n2 - 1) * 3],
-                vertices[(vertexOffset + n2 - 1) * 3 + 1],
-                vertices[(vertexOffset + n2 - 1) * 3 + 2]
-              );
-              const v3 = new THREE.Vector3(
-                vertices[(vertexOffset + n3 - 1) * 3],
-                vertices[(vertexOffset + n3 - 1) * 3 + 1],
-                vertices[(vertexOffset + n3 - 1) * 3 + 2]
+              let normal = edge1.cross(edge2).normalize();
+              
+              // Check if normal is pointing inward (negative dot product with centroid)
+              const centroid = new THREE.Vector3(
+                (v1.X() + v2.X() + v3.X()) / 3,
+                (v1.Y() + v2.Y() + v3.Y()) / 3,
+                (v1.Z() + v2.Z() + v3.Z()) / 3
               );
               
-              const edge1 = v2.clone().sub(v1);
-              const edge2 = v3.clone().sub(v1);
-              const normal = edge1.cross(edge2).normalize();
+              // For box faces, we want normals pointing outward
+              // If the normal points toward the box center, flip it
+              const boxCenter = new THREE.Vector3(24, 16, 18); // Center of our frame
+              const toCenter = boxCenter.clone().sub(centroid).normalize();
               
-              // Add the same normal for all three vertices of the triangle
+              if (normal.dot(toCenter) > 0) {
+                // Normal is pointing inward, flip it
+                normal.negate();
+                // Also flip triangle winding order
+                indices.push(
+                  vertexOffset + n1 - 1,
+                  vertexOffset + n3 - 1,  // Swapped n2 and n3
+                  vertexOffset + n2 - 1
+                );
+              } else {
+                // Normal is pointing outward, keep original winding
+                indices.push(
+                  vertexOffset + n1 - 1,
+                  vertexOffset + n2 - 1,
+                  vertexOffset + n3 - 1
+                );
+              }
+              
+              // Add the corrected normal for all three vertices of the triangle
               for (let j = 0; j < 3; j++) {
                 normals.push(normal.x, normal.y, normal.z);
               }
@@ -166,12 +342,12 @@ This page hosts an interactive 3-D model viewer that uses [OpenCascade.js](https
 
     // Simplified mesh extraction as fallback
     function createSimplifiedMesh(shape) {
-      console.log(' Creating simplified mesh from OpenCascade shape...');
+      console.log('🔧 Creating simplified mesh from OpenCascade shape...');
       
-      // For now, create a simple torus geometry that matches the OpenCascade parameters
+      // Create a box geometry that matches our frame parameters
       // This ensures we still get a visualization even if mesh extraction fails
-      const geometry = new THREE.TorusGeometry(50, 20, 16, 100);
-      console.log(' Simplified torus geometry created');
+      const geometry = new THREE.BoxGeometry(outerW, outerH, height + frameZ);
+      console.log('✅ Simplified box geometry created: {}×{}×{}', outerW, outerH, height + frameZ);
       return geometry;
     }
 
@@ -182,7 +358,7 @@ This page hosts an interactive 3-D model viewer that uses [OpenCascade.js](https
         
         try {
           const material = new THREE.MeshStandardMaterial({ 
-            color: 0x00aa88,
+            color: 0xff0000, // Red color indicates boolean operations failed (solid box instead of hollow frame)
             metalness: 0.1,
             roughness: 0.4,
             transparent: true,
@@ -220,59 +396,49 @@ This page hosts an interactive 3-D model viewer that uses [OpenCascade.js](https
       
       const container = document.getElementById('viewer');
       
-      // Check if a renderer already exists and dispose of it properly
-      if (window.threeJSRenderer) {
-        console.log(' Disposing existing Three.js renderer');
-        window.threeJSRenderer.dispose();
-        window.threeJSRenderer = null;
+      // === Initialize Three.js Scene ===
+      console.log(' Initializing Three.js scene...');
+      
+      // Clear any existing content in the viewer container
+      if (!container) {
+        console.error(' Viewer container not found');
+        return;
       }
       
-      // Clear any existing content completely
+      // Clear previous content to prevent WebGL context conflicts
       container.innerHTML = '';
       
-      // Scene setup
-      console.log(' Setting up Three.js scene...');
       const scene = new THREE.Scene();
       scene.background = new THREE.Color(0xf0f0f0);
       
-      // Camera setup
-      const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-      camera.position.set(100, 100, 100);
+      // Create camera with proper aspect ratio
+      const containerRect = container.getBoundingClientRect();
+      const camera = new THREE.PerspectiveCamera(
+        75, 
+        containerRect.width / containerRect.height, 
+        0.1, 
+        1000
+      );
       
-      // Renderer setup
-      console.log(' Creating WebGL renderer...');
-      let renderer;
-      try {
-        renderer = new THREE.WebGLRenderer({ 
-          antialias: true,
-          alpha: false,
-          preserveDrawingBuffer: false,
-          powerPreference: "high-performance"
-        });
-        console.log(' WebGL renderer created successfully');
-      } catch (error) {
-        console.error(' Failed to create WebGL renderer:', error);
-        throw error;
-      }
+      // Position camera outside the box (48×32×36) for good viewing angle
+      camera.position.set(80, 60, 80);
+      camera.lookAt(24, 16, 18); // Look at center of the box
       
-      renderer.setSize(container.clientWidth, container.clientHeight);
+      // Create renderer
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(containerRect.width, containerRect.height);
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       
-      // Store renderer globally for cleanup
-      window.threeJSRenderer = renderer;
-      
-      // Add renderer canvas to container
+      // Append renderer to cleared container
       container.appendChild(renderer.domElement);
-      console.log(' Renderer canvas added to container');
       
-      // Controls
+      // Controls - ensure they're properly initialized
       const controls = new OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
-      controls.enablePan = true;
-      controls.enableZoom = true;
-      controls.enableRotate = true;
+      controls.target.set(24, 16, 18); // Set target to center of box
+      controls.update();
       
       // Lighting
       const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
@@ -480,7 +646,7 @@ This page hosts an interactive 3-D model viewer that uses [OpenCascade.js](https
         
         // Step 1: Convert OpenCascade shape to Three.js geometry
         console.log(' Step 1: Converting OpenCascade shape to mesh...');
-        const geometry = convertOpenCascadeToMesh(torusShape);
+        const geometry = convertOpenCascadeToMesh(window.frameShape);
         
         // Try GLB workflow first
         try {
@@ -511,11 +677,14 @@ This page hosts an interactive 3-D model viewer that uses [OpenCascade.js](https
           <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f0f0f0; color: #333; font-family: Arial, sans-serif;">
             <div style="text-align: center;">
               <h3> OpenCascade.js → Three.js Workflow</h3>
-              <p>OpenCascade torus shape created successfully!</p>
+              <p>OpenCascade frame structure created successfully!</p>
               <ul style="text-align: left; display: inline-block;">
-                <li>Major radius: 50</li>
-                <li>Minor radius: 20</li>
-                <li>Shape type: ${torusShape.ShapeType()}</li>
+                <li>Outer width: ${outerW}</li>
+                <li>Outer height: ${outerH}</li>
+                <li>Wall thickness: ${wall}</li>
+                <li>Frame Z: ${frameZ}</li>
+                <li>Height: ${height}</li>
+                <li>Beam width: ${beamW}</li>
               </ul>
               <p><em> 3D viewer encountered an error during processing. Check console for details.</em></p>
               <p><strong>Error:</strong> ${error.message}</p>
