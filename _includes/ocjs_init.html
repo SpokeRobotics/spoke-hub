@@ -1,0 +1,52 @@
+{% comment %}
+OpenCascade.js initialization include for Spoke documentation site.
+Usage in any page:
+
+  {% include ocjs_init.html container_id="my-viewer" %}
+
+Then add (optionally) a call to `initOcjsBottleViewer('my-viewer');` or your own custom code.
+This include automatically creates a <div> with the specified container_id (default 'ocjs-viewer')
+with responsive sizing and loads OpenCascade.js.
+{% endcomment %}
+
+<!-- Viewer container -->
+<div id="{{ include.container_id | default: 'ocjs-viewer' }}" style="width: 100%; height: 600px; max-width: 100%; margin: 0 auto; border: 1px solid #ccc;"></div>
+
+<!-- Import map for OpenCascade.js ES modules -->
+<script type="importmap">
+{
+  "imports": {
+    "opencascade.js": "https://unpkg.com/opencascade.js@1.1.1/dist/opencascade.wasm.js"
+  }
+}
+</script>
+
+<!-- Load OpenCascade.js as ES module and expose global promise -->
+<script type="module">
+import initOpenCascade from 'opencascade.js';
+
+/**
+ * window.ocjsReady is a Promise that resolves with the initialized OpenCascade.js module.
+ * 
+ * Example usage in a page:
+ *   const oc = await window.ocjsReady;
+ *   const box = new oc.BRepPrimAPI_MakeBox_2(1, 1, 1);
+ *   // ...custom geometry...
+ */
+window.ocjsReady = initOpenCascade({
+  locateFile: function(path, prefix) {
+    // Return the unpkg CDN path for WASM files
+    if (path.endsWith('.wasm')) {
+      return 'https://unpkg.com/opencascade.js@1.1.1/dist/' + path;
+    }
+    return prefix + path;
+  }
+}).then(oc => {
+  console.log('OpenCascade.js loaded successfully from unpkg CDN');
+  return oc;
+}).catch(error => {
+  console.error('Failed to load OpenCascade.js:', error);
+  throw error;
+});
+</script>
+

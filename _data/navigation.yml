@@ -4,6 +4,8 @@ main:
     url: /getting-started/
   - title: "Spoke Overview"
     url: /spoke-overview/
+  - title: "CAD Viewer"
+    url: /cad-viewer/
   - title: "Discussions"
     url: https://github.com/spokerobotics/spoke-hub/discussions
   - title: "Issues"
