@@ -192,6 +192,7 @@ window.cascadeViewer = {
     
     if (!this.currentModelData.shape || !this.currentModelData.oc) {
       console.error('❌ No OpenCascade shape data available for STEP export');
+      this.updateStatus('viewer', 'STEP export failed - No model data available', 'error', 0);
       alert('Error: No OpenCascade model data available for STEP export');
       return;
     }
@@ -224,8 +225,12 @@ window.cascadeViewer = {
       
       console.log('✅ STEP export completed:', filename, `(${stepContent.length} bytes)`);
       
+      // Update status
+      this.updateStatus('viewer', `STEP file exported successfully: ${filename}`, 'success', 3000);
+      
     } catch (error) {
       console.error('❌ Error exporting STEP:', error);
+      this.updateStatus('viewer', `STEP export failed: ${error.message}`, 'error', 0);
       alert('Error exporting STEP file: ' + error.message);
     }
   },
@@ -236,6 +241,7 @@ window.cascadeViewer = {
     
     if (!this.currentModelData.geometry) {
       console.error('❌ No geometry data available for STL export');
+      this.updateStatus('viewer', 'STL export failed - No geometry data available', 'error', 0);
       alert('Error: No model data available for export');
       return;
     }
@@ -244,8 +250,12 @@ window.cascadeViewer = {
       const stlContent = this.generateSTLContent(this.currentModelData.geometry);
       this.downloadFile(filename, stlContent, 'model/stl');
       console.log('✅ STL file exported successfully:', filename);
+      
+      // Update status
+      this.updateStatus('viewer', `STL file exported successfully: ${filename}`, 'success', 3000);
     } catch (error) {
       console.error('❌ Error exporting STL:', error);
+      this.updateStatus('viewer', `STL export failed: ${error.message}`, 'error', 0);
       alert('Error exporting STL file: ' + error.message);
     }
   },
@@ -256,6 +266,7 @@ window.cascadeViewer = {
     
     if (!this.currentModelData.geometry) {
       console.error('❌ No geometry data available for GLTF export');
+      this.updateStatus('viewer', 'GLTF export failed - No geometry data available', 'error', 0);
       alert('Error: No model data available for export');
       return;
     }
@@ -263,8 +274,12 @@ window.cascadeViewer = {
     try {
       this.generateGLTFContent(this.currentModelData.geometry, filename);
       console.log('✅ GLTF export initiated:', filename);
+      
+      // Update status
+      this.updateStatus('viewer', `GLTF file exported successfully: ${filename}`, 'success', 3000);
     } catch (error) {
       console.error('❌ Error exporting GLTF:', error);
+      this.updateStatus('viewer', `GLTF export failed: ${error.message}`, 'error', 0);
       alert('Error exporting GLTF file: ' + error.message);
     }
   },
@@ -994,6 +1009,9 @@ window.cascadeViewer = {
       this.aceEditors[containerId].focus();
     }, 100);
     
+    // Update status
+    this.updateStatus(containerId, 'Code editor opened', 'info', 2000);
+    
     console.log('✅ Code editor opened for:', containerId);
   },
   
@@ -1051,6 +1069,10 @@ window.cascadeViewer = {
     }
     
     this.hideErrorDisplay(containerId);
+    
+    // Update status
+    this.updateStatus(containerId, 'Code editor closed', 'info', 2000);
+    
     console.log('✅ Code editor closed for:', containerId);
   },
   
@@ -1149,12 +1171,17 @@ window.cascadeViewer = {
     
     if (!this.editorVersions || !this.editorVersions[containerId] || !this.editorVersions[containerId].lastRunCode) {
       console.log('⚠️ No previous RUN state to undo to for:', containerId);
+      this.updateStatus(containerId, 'No previous run state to undo to', 'warning', 3000);
       return;
     }
     
     const lastRunCode = this.editorVersions[containerId].lastRunCode;
     this.aceEditors[containerId].setValue(lastRunCode, -1);
     this.hideErrorDisplay(containerId);
+    
+    // Update status
+    this.updateStatus(containerId, 'Changes undone to last run state', 'success', 2500);
+    
     console.log('↶ Undid changes to last RUN state for:', containerId);
   },
   
@@ -1183,10 +1210,12 @@ window.cascadeViewer = {
     
     if (originalCode) {
       this.aceEditors[containerId].setValue(originalCode, -1);
+      this.updateStatus(containerId, 'Code reset to original', 'success', 2500);
       console.log('🔄 Editor reset to original code for:', containerId);
     } else {
       // Fallback to repopulating
       this.populateEditorWithCurrentCode(containerId);
+      this.updateStatus(containerId, 'Code reset using fallback method', 'warning', 3000);
       console.log('🔄 Editor reset using fallback method for:', containerId);
     }
     
@@ -1242,6 +1271,9 @@ window.cascadeViewer = {
           // Update the 3D viewer with the new model
           this.displayModel(shape, containerId);
           
+          // Update status
+          this.updateStatus(containerId, 'Code executed successfully - Model updated', 'success', 3000);
+          
           console.log('✅ Model updated successfully!');
         } else {
           throw new Error('buildModel function did not return a valid shape');
@@ -1250,10 +1282,16 @@ window.cascadeViewer = {
       } catch (error) {
         console.error('❌ Error executing code:', error);
         this.showErrorDisplay(containerId, error.message);
+        
+        // Update status with error
+        this.updateStatus(containerId, `Code execution failed: ${error.message}`, 'error', 0);
       }
     }).catch(error => {
       console.error('❌ OpenCascade.js not ready:', error);
       this.showErrorDisplay(containerId, 'OpenCascade.js is not ready yet. Please wait and try again.');
+      
+      // Update status with error
+      this.updateStatus(containerId, 'OpenCascade.js not ready - Please wait and try again', 'error', 0);
     });
   },
   
@@ -1273,6 +1311,90 @@ window.cascadeViewer = {
     const errorDisplay = document.getElementById(containerId + '-error-display');
     if (errorDisplay) {
       errorDisplay.style.display = 'none';
+    }
+  },
+  
+  // Status notification system
+  updateStatus: function(containerId, message, type = 'success', duration = 3000) {
+    console.log(`📢 Status Update [${type}]:`, message);
+    
+    // Find or create status container
+    let statusContainer = document.getElementById(containerId + '-status-container');
+    
+    if (!statusContainer) {
+      // Create status container if it doesn't exist
+      statusContainer = document.createElement('div');
+      statusContainer.id = containerId + '-status-container';
+      statusContainer.style.cssText = 'margin: 10px 0; text-align: center;';
+      
+      // Insert after the buttons container (not the viewer)
+      const buttonsContainer = document.getElementById(containerId + '-export-buttons');
+      if (buttonsContainer && buttonsContainer.parentNode) {
+        buttonsContainer.parentNode.insertBefore(statusContainer, buttonsContainer.nextSibling);
+      } else {
+        // Fallback: insert after viewer if buttons container not found
+        const viewerContainer = document.getElementById(containerId);
+        if (viewerContainer && viewerContainer.parentNode) {
+          viewerContainer.parentNode.insertBefore(statusContainer, viewerContainer.nextSibling);
+        }
+      }
+    }
+    
+    // Determine styling based on type
+    let bgColor, borderColor, textColor, icon;
+    switch (type) {
+      case 'success':
+        bgColor = '#d4edda';
+        borderColor = '#c3e6cb';
+        textColor = '#155724';
+        icon = '✅';
+        break;
+      case 'error':
+        bgColor = '#f8d7da';
+        borderColor = '#f5c6cb';
+        textColor = '#721c24';
+        icon = '❌';
+        break;
+      case 'warning':
+        bgColor = '#fff3cd';
+        borderColor = '#ffeaa7';
+        textColor = '#856404';
+        icon = '⚠️';
+        break;
+      case 'info':
+        bgColor = '#d1ecf1';
+        borderColor = '#bee5eb';
+        textColor = '#0c5460';
+        icon = 'ℹ️';
+        break;
+      default:
+        bgColor = '#e2e3e5';
+        borderColor = '#d6d8db';
+        textColor = '#383d41';
+        icon = '📝';
+    }
+    
+    // Create status message
+    const timestamp = new Date().toLocaleTimeString();
+    statusContainer.innerHTML = `
+      <div style="padding: 10px; background: ${bgColor}; border: 1px solid ${borderColor}; border-radius: 4px; color: ${textColor}; font-size: 14px;">
+        <span style="font-weight: bold;">${icon} ${message}</span>
+        <span style="float: right; font-size: 12px; opacity: 0.7;">${timestamp}</span>
+      </div>
+    `;
+    
+    // Auto-hide after duration (unless it's an error)
+    if (type !== 'error' && duration > 0) {
+      setTimeout(() => {
+        if (statusContainer && statusContainer.parentNode) {
+          statusContainer.style.opacity = '0.5';
+          setTimeout(() => {
+            if (statusContainer && statusContainer.parentNode) {
+              statusContainer.innerHTML = '';
+            }
+          }, 1000);
+        }
+      }, duration);
     }
   }
 };
@@ -1375,13 +1497,14 @@ window.cascadeViewer.autoDetectAndExecute = function() {
           // Display the model
           this.displayModel(shape, containerId);
           
-          // Update the loading message to success
+          // Update status with new notification system
           setTimeout(() => {
-            loadingDiv.innerHTML = `
-              <div style="padding: 10px; text-align: center; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; margin: 10px 0;">
-                <p>✅ <strong>Cascade Model ${index + 1}</strong> - Loaded Successfully</p>
-              </div>
-            `;
+            this.updateStatus(containerId, `Cascade Model ${index + 1} loaded successfully`, 'success', 4000);
+            
+            // Remove the loading div since we now use the status system
+            if (loadingDiv && loadingDiv.parentNode) {
+              loadingDiv.parentNode.removeChild(loadingDiv);
+            }
           }, 1000);
           
         } else {
