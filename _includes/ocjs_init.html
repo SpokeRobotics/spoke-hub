@@ -18,10 +18,53 @@ After including this, you can:
 
 <!-- Export buttons container (hidden by default) -->
 <div id="{{ include.container_id | default: 'ocjs-viewer' }}-export-buttons" style="display: none; text-align: center; margin: 10px 0; padding: 10px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px;">
-  <p style="margin: 0 0 10px 0; font-weight: bold; color: #495057;">📁 Export Model:</p>
-  <button id="{{ include.container_id | default: 'ocjs-viewer' }}-export-step" style="margin: 0 5px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">STEP</button>
-  <button id="{{ include.container_id | default: 'ocjs-viewer' }}-export-stl" style="margin: 0 5px; padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">STL</button>
-  <button id="{{ include.container_id | default: 'ocjs-viewer' }}-export-gltf" style="margin: 0 5px; padding: 8px 16px; background: #ffc107; color: black; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">GLTF</button>
+  <!-- Edit button section -->
+  <div style="margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #dee2e6;">
+    <p style="margin: 0 0 10px 0; font-weight: bold; color: #495057;">✏️ Edit Code:</p>
+    <button id="{{ include.container_id | default: 'ocjs-viewer' }}-edit-code" style="margin: 0 5px; padding: 8px 16px; background: #6f42c1; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">EDIT</button>
+  </div>
+  
+  <!-- Export section -->
+  <div>
+    <p style="margin: 0 0 10px 0; font-weight: bold; color: #495057;">📁 Export Model:</p>
+    <button id="{{ include.container_id | default: 'ocjs-viewer' }}-export-step" style="margin: 0 5px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">STEP</button>
+    <button id="{{ include.container_id | default: 'ocjs-viewer' }}-export-stl" style="margin: 0 5px; padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">STL</button>
+    <button id="{{ include.container_id | default: 'ocjs-viewer' }}-export-gltf" style="margin: 0 5px; padding: 8px 16px; background: #ffc107; color: black; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">GLTF</button>
+  </div>
+</div>
+
+<!-- Code editor container (hidden by default) -->
+<div id="{{ include.container_id | default: 'ocjs-viewer' }}-editor-container" style="display: none; margin: 10px 0; border: 1px solid #dee2e6; border-radius: 4px; background: #f8f9fa;">
+  <!-- Editor header -->
+  <div style="padding: 10px; background: #e9ecef; border-bottom: 1px solid #dee2e6; border-radius: 4px 4px 0 0;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h4 style="margin: 0; color: #495057; font-size: 16px;">🛠️ Edit Cascade Code</h4>
+      <button id="{{ include.container_id | default: 'ocjs-viewer' }}-editor-close" style="background: #6c757d; color: white; border: none; border-radius: 3px; padding: 5px 10px; cursor: pointer; font-size: 12px;">✕ Close</button>
+    </div>
+  </div>
+  
+  <!-- Editor content -->
+  <div style="padding: 15px;">
+    <!-- Ace Editor will be inserted here -->
+    <div id="{{ include.container_id | default: 'ocjs-viewer' }}-ace-editor" style="width: 100%; height: 300px; border: 1px solid #ced4da; border-radius: 4px;"></div>
+    
+    <!-- Editor controls -->
+    <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <button id="{{ include.container_id | default: 'ocjs-viewer' }}-run-code" style="background: #28a745; color: white; border: none; border-radius: 4px; padding: 10px 20px; cursor: pointer; font-size: 14px; font-weight: bold;">▶️ RUN</button>
+        <button id="{{ include.container_id | default: 'ocjs-viewer' }}-reset-code" style="background: #6c757d; color: white; border: none; border-radius: 4px; padding: 10px 20px; cursor: pointer; font-size: 14px; margin-left: 10px;">🔄 Reset</button>
+      </div>
+      <div style="font-size: 12px; color: #6c757d;">
+        <kbd>Ctrl+Enter</kbd> to run
+      </div>
+    </div>
+    
+    <!-- Error display area -->
+    <div id="{{ include.container_id | default: 'ocjs-viewer' }}-error-display" style="display: none; margin-top: 15px; padding: 15px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; color: #721c24;">
+      <h5 style="margin: 0 0 10px 0; color: #721c24;">❌ Error</h5>
+      <pre id="{{ include.container_id | default: 'ocjs-viewer' }}-error-message" style="margin: 0; white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 13px;"></pre>
+    </div>
+  </div>
 </div>
 
 <!-- Import map for OpenCascade.js and Three.js ES modules -->
@@ -30,18 +73,29 @@ After including this, you can:
   "imports": {
     "opencascade.js": "https://unpkg.com/opencascade.js@1.1.1/dist/opencascade.wasm.js",
     "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+    "ace-builds": "https://cdn.skypack.dev/ace-builds@1.32.6",
+    "ace-builds/": "https://cdn.skypack.dev/ace-builds@1.32.6/"
   }
 }
 </script>
 
-<!-- Load OpenCascade.js and Three.js utilities -->
+<!-- Load OpenCascade.js, Three.js utilities, and Ace Editor -->
 <script type="module">
 import initOpenCascade from 'opencascade.js';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+// Import Ace Editor as ES module
+import ace from 'ace-builds';
+import 'ace-builds/src-noconflict/mode-javascript';
+import 'ace-builds/src-noconflict/theme-monokai';
+
+// Make ace globally available for the cascadeViewer
+window.ace = ace;
+console.log('✅ Ace Editor loaded as ES module');
 
 /**
  * window.ocjsReady is a Promise that resolves with the initialized OpenCascade.js module.
@@ -95,10 +149,14 @@ window.cascadeViewer = {
 
   // Setup export button event handlers
   setupExportHandlers: function(containerId) {
+    const editBtn = document.getElementById(containerId + '-edit-code');
     const stepBtn = document.getElementById(containerId + '-export-step');
     const stlBtn = document.getElementById(containerId + '-export-stl');
     const gltfBtn = document.getElementById(containerId + '-export-gltf');
 
+    if (editBtn) {
+      editBtn.onclick = () => this.showCodeEditor(containerId);
+    }
     if (stepBtn) {
       stepBtn.onclick = () => this.exportSTEP();
     }
@@ -108,7 +166,7 @@ window.cascadeViewer = {
     if (gltfBtn) {
       gltfBtn.onclick = () => this.exportGLTF();
     }
-    console.log('✅ Export button handlers setup for container:', containerId);
+    console.log('✅ Export and edit button handlers setup for container:', containerId);
   },
 
   // Get page name for filename
@@ -419,20 +477,18 @@ window.cascadeViewer = {
       
       while (faceExplorer.More()) {
         faceCount++;
-        console.log(`  Processing face ${faceCount}...`);
         
         const face = oc.TopoDS.Face_1(faceExplorer.Current());
         const location = new oc.TopLoc_Location_1();
         const triangulation = oc.BRep_Tool.Triangulation(face, location);
         
         if (!triangulation.IsNull()) {
-          console.log(`  Face ${faceCount} has triangulation data`);
+          // console.log(`  Face ${faceCount} has triangulation data`);
           const transform = location.Transformation();
           
           // Get node and triangle counts using correct API
           const nodeCount = triangulation.get().NbNodes();
           const triangleCount = triangulation.get().NbTriangles();
-          console.log(`    Nodes: ${nodeCount}, Triangles: ${triangleCount}`);
           
           // Extract vertices
           for (let i = 1; i <= nodeCount; i++) {
@@ -873,6 +929,260 @@ window.cascadeViewer = {
         </div>
       `;
     }
+  },
+
+  // Show code editor for editing cascade code
+  showCodeEditor: function(containerId) {
+    console.log('✏️ Opening code editor for container:', containerId);
+    
+    // Show the editor container
+    const editorContainer = document.getElementById(containerId + '-editor-container');
+    if (!editorContainer) {
+      console.error('❌ Editor container not found for:', containerId);
+      return;
+    }
+    
+    editorContainer.style.display = 'block';
+    
+    // Initialize Ace Editor if not already done
+    const aceEditorId = containerId + '-ace-editor';
+    if (!this.aceEditors) {
+      this.aceEditors = {};
+    }
+    
+    if (!this.aceEditors[containerId]) {
+      console.log('🔧 Initializing Ace Editor for:', containerId);
+      
+      // Check if Ace Editor is available (should be loaded as ES module)
+      if (typeof window.ace === 'undefined') {
+        console.error('❌ Ace Editor ES module not loaded');
+        alert('Code editor failed to load. Please refresh the page and try again.');
+        return;
+      }
+      
+      // Create the editor
+      const editor = window.ace.edit(aceEditorId);
+      editor.setTheme('ace/theme/monokai');
+      editor.session.setMode('ace/mode/javascript');
+      editor.setOptions({
+        fontSize: 14,
+        showPrintMargin: false,
+        wrap: true,
+        enableBasicAutocompletion: true,
+        enableLiveAutocompletion: true
+      });
+      
+      // Add keyboard shortcut for running code (Ctrl+Enter)
+      editor.commands.addCommand({
+        name: 'runCode',
+        bindKey: {win: 'Ctrl-Enter', mac: 'Cmd-Enter'},
+        exec: () => this.runCodeFromEditor(containerId)
+      });
+      
+      this.aceEditors[containerId] = editor;
+      
+      // Setup button handlers
+      this.setupEditorHandlers(containerId);
+    }
+    
+    // Populate editor with current code
+    this.populateEditorWithCurrentCode(containerId);
+    
+    // Focus the editor
+    setTimeout(() => {
+      this.aceEditors[containerId].focus();
+    }, 100);
+    
+    console.log('✅ Code editor opened for:', containerId);
+  },
+  
+  // Setup editor button handlers
+  setupEditorHandlers: function(containerId) {
+    const runBtn = document.getElementById(containerId + '-run-code');
+    const resetBtn = document.getElementById(containerId + '-reset-code');
+    const closeBtn = document.getElementById(containerId + '-editor-close');
+    
+    if (runBtn) {
+      runBtn.onclick = () => this.runCodeFromEditor(containerId);
+    }
+    if (resetBtn) {
+      resetBtn.onclick = () => this.resetEditorCode(containerId);
+    }
+    if (closeBtn) {
+      closeBtn.onclick = () => this.closeCodeEditor(containerId);
+    }
+  },
+  
+  // Close code editor
+  closeCodeEditor: function(containerId) {
+    const editorContainer = document.getElementById(containerId + '-editor-container');
+    if (editorContainer) {
+      editorContainer.style.display = 'none';
+    }
+    this.hideErrorDisplay(containerId);
+    console.log('✅ Code editor closed for:', containerId);
+  },
+  
+  // Populate editor with current cascade code
+  populateEditorWithCurrentCode: function(containerId) {
+    if (!this.aceEditors[containerId]) return;
+    
+    console.log('🔍 Populating editor with code for:', containerId);
+    console.log('🔍 Stored originalCode:', this.currentModelData.originalCode ? this.currentModelData.originalCode.substring(0, 100) + '...' : 'null');
+    
+    // Try multiple sources for the code
+    let currentCode = this.currentModelData.originalCode || 
+                     (window.cascadeOriginalCode && window.cascadeOriginalCode[containerId]) ||
+                     this.extractCodeFromPage(containerId) || 
+                     this.extractCodeFromMarkdown();
+    
+    console.log('🔍 Code sources checked:');
+    console.log('  - currentModelData.originalCode:', this.currentModelData.originalCode ? 'found' : 'null');
+    console.log('  - global backup:', window.cascadeOriginalCode && window.cascadeOriginalCode[containerId] ? 'found' : 'null');
+    console.log('  - page extraction: will try if needed');
+    console.log('  - markdown extraction: will try if needed');
+    
+    console.log('🔍 Final code source:', currentCode ? currentCode.substring(0, 100) + '...' : 'using default template');
+    
+    if (!currentCode) {
+      // Provide a default template
+      currentCode = `function buildModel(oc) {
+  // Create your OpenCascade.js model here
+  // Example: Simple box
+  const box = new oc.BRepPrimAPI_MakeBox_2(50, 50, 50);
+  return box.Shape();
+}`;
+      console.log('⚠️ Using default template - original code not found');
+    }
+    
+    this.aceEditors[containerId].setValue(currentCode, -1);
+    console.log('✅ Editor populated with code for:', containerId);
+  },
+  
+  // Extract code from the current page (fallback)
+  extractCodeFromPage: function(containerId) {
+    console.log('🔍 Trying to extract code from page...');
+    // Try to find cascade code blocks on the page
+    const codeBlocks = document.querySelectorAll('code.language-cascade');
+    console.log('🔍 Found', codeBlocks.length, 'cascade code blocks');
+    if (codeBlocks.length > 0) {
+      const code = codeBlocks[0].textContent || codeBlocks[0].innerText;
+      console.log('🔍 Extracted code from page:', code.substring(0, 100) + '...');
+      return code;
+    }
+    return null;
+  },
+  
+  // Extract code from markdown content (better fallback)
+  extractCodeFromMarkdown: function() {
+    console.log('🔍 Trying to extract code from markdown content...');
+    
+    // Look for any remaining pre elements with cascade code
+    const preElements = document.querySelectorAll('pre');
+    for (let pre of preElements) {
+      const code = pre.querySelector('code');
+      if (code && (code.className.includes('cascade') || code.className.includes('language-cascade'))) {
+        const codeText = code.textContent || code.innerText;
+        console.log('🔍 Found cascade code in pre element:', codeText.substring(0, 100) + '...');
+        return codeText;
+      }
+    }
+    
+    // Look for script elements or other containers that might have the code
+    const allCodeElements = document.querySelectorAll('code');
+    for (let code of allCodeElements) {
+      const codeText = code.textContent || code.innerText;
+      if (codeText.includes('function buildModel') && codeText.includes('oc')) {
+        console.log('🔍 Found buildModel function in code element:', codeText.substring(0, 100) + '...');
+        return codeText;
+      }
+    }
+    
+    console.log('🔍 No cascade code found in markdown content');
+    return null;
+  },
+  
+  // Reset editor to original code
+  resetEditorCode: function(containerId) {
+    this.populateEditorWithCurrentCode(containerId);
+    this.hideErrorDisplay(containerId);
+    console.log('✅ Editor code reset for:', containerId);
+  },
+  
+  // Run code from editor
+  runCodeFromEditor: function(containerId) {
+    console.log('▶️ Running code from editor for:', containerId);
+    
+    if (!this.aceEditors[containerId]) {
+      console.error('❌ No editor found for:', containerId);
+      return;
+    }
+    
+    const code = this.aceEditors[containerId].getValue();
+    this.hideErrorDisplay(containerId);
+    
+    // Execute the code
+    window.ocjsReady.then(oc => {
+      try {
+        // Create a function wrapper and execute the code
+        const functionWrapper = `
+          (function(oc) {
+            ${code}
+            
+            // Expect a buildModel function to be defined
+            if (typeof buildModel === 'function') {
+              return buildModel(oc);
+            } else {
+              throw new Error('Code must define a buildModel(oc) function that returns a shape');
+            }
+          })
+        `;
+        
+        console.log('🔧 Executing edited code...');
+        const executeCode = eval(functionWrapper);
+        const shape = executeCode(oc);
+        
+        if (shape) {
+          console.log('✅ Code executed successfully, updating model...');
+          
+          // Store the new code
+          this.currentModelData.originalCode = code;
+          
+          // Update the 3D viewer with the new model
+          this.displayModel(shape, containerId);
+          
+          console.log('✅ Model updated successfully!');
+        } else {
+          throw new Error('buildModel function did not return a valid shape');
+        }
+        
+      } catch (error) {
+        console.error('❌ Error executing code:', error);
+        this.showErrorDisplay(containerId, error.message);
+      }
+    }).catch(error => {
+      console.error('❌ OpenCascade.js not ready:', error);
+      this.showErrorDisplay(containerId, 'OpenCascade.js is not ready yet. Please wait and try again.');
+    });
+  },
+  
+  // Show error in the error display area
+  showErrorDisplay: function(containerId, errorMessage) {
+    const errorDisplay = document.getElementById(containerId + '-error-display');
+    const errorMessageEl = document.getElementById(containerId + '-error-message');
+    
+    if (errorDisplay && errorMessageEl) {
+      errorMessageEl.textContent = errorMessage;
+      errorDisplay.style.display = 'block';
+    }
+  },
+  
+  // Hide error display
+  hideErrorDisplay: function(containerId) {
+    const errorDisplay = document.getElementById(containerId + '-error-display');
+    if (errorDisplay) {
+      errorDisplay.style.display = 'none';
+    }
   }
 };
 
@@ -959,6 +1269,17 @@ window.cascadeViewer.autoDetectAndExecute = function() {
           if (preElement) {
             preElement.parentNode.replaceChild(loadingDiv, preElement);
           }
+          
+          // Store the original code for the editor
+          this.currentModelData.originalCode = codeContent;
+          console.log('📝 Stored original code for editor (' + codeContent.length + ' chars):', codeContent.substring(0, 100) + '...');
+          
+          // Also store it globally as a backup
+          if (!window.cascadeOriginalCode) {
+            window.cascadeOriginalCode = {};
+          }
+          window.cascadeOriginalCode[containerId] = codeContent;
+          console.log('📝 Backup code stored globally for container:', containerId);
           
           // Display the model
           this.displayModel(shape, containerId);
