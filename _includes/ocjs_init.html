@@ -88,7 +88,10 @@ After including this, you can:
   "imports": {
     "opencascade.js": "https://unpkg.com/opencascade.js@1.1.1/dist/opencascade.wasm.js",
     "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+    "three/addons/controls/OrbitControls.js": "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js",
+    "three/addons/loaders/GLTFLoader.js": "https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js",
+    "three/addons/exporters/GLTFExporter.js": "https://unpkg.com/three@0.160.0/examples/jsm/exporters/GLTFExporter.js",
+    "three/addons/utils/BufferGeometryUtils.js": "https://unpkg.com/three@0.160.0/examples/jsm/utils/BufferGeometryUtils.js",
     "ace-builds": "https://cdn.skypack.dev/ace-builds@1.32.6",
     "ace-builds/": "https://cdn.skypack.dev/ace-builds@1.32.6/"
   }
@@ -100,8 +103,9 @@ After including this, you can:
 import initOpenCascade from 'opencascade.js';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 
 // Import Ace Editor as ES module
 import ace from 'ace-builds';
@@ -625,8 +629,14 @@ window.cascadeViewer = {
       geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
       geometry.setIndex(indices);
       
+      // Fix shading artifacts by merging vertices and recomputing normals
+      console.log('🔧 Merging vertices to fix shading artifacts...');
+      const mergedGeometry = BufferGeometryUtils.mergeVertices(geometry, 1e-6);
+      mergedGeometry.computeVertexNormals();
+      console.log('✅ Vertices merged and normals recomputed for proper shading');
+      
       console.log('✅ Three.js geometry created successfully');
-      return geometry;
+      return mergedGeometry;
       
     } catch (error) {
       console.error('❌ Error in convertOpenCascadeToMesh:', error);
@@ -723,10 +733,10 @@ window.cascadeViewer = {
     controls.update();
     
     // Lighting
-    const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.9);  // Increased for softer shading
     scene.add(ambientLight);
     
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);  // Reduced for softer shading
     directionalLight.position.set(100, 100, 50);
     directionalLight.castShadow = true;
     scene.add(directionalLight);
@@ -857,10 +867,10 @@ window.cascadeViewer = {
     controls.dampingFactor = 0.05;
     
     // Lighting
-    const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.9);  // Increased for softer shading
     scene.add(ambientLight);
     
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);  // Reduced for softer shading
     directionalLight.position.set(100, 100, 50);
     directionalLight.castShadow = true;
     scene.add(directionalLight);
