@@ -25,12 +25,8 @@ This page hosts an interactive 3-D model viewer that uses [OpenCascade.js](https
   import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
   import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-  // Wait for OpenCascade to finish loading then create geometry and display it.
-  window.ocjsReady.then(oc => {
-    console.log(' OpenCascade.js loaded successfully from unpkg CDN');
-    console.log(' Main callback executed at:', new Date().toISOString());
-    
-    // Build a frame structure using OpenCascade.js
+  // Function to build the frame model using OpenCascade.js
+  function buildFrameModel(oc) {
     console.log(' Creating OpenCascade frame structure...');
     
     // === Parameters ===
@@ -181,13 +177,24 @@ This page hosts an interactive 3-D model viewer that uses [OpenCascade.js](https
       console.log(' Shape type:', frameShape.ShapeType());
       console.log(' Dimensions: {}×{}×{} units', outerW, outerH, height + frameZ);
       
-      // Store the shape for mesh extraction
-      window.frameShape = frameShape;
+      return frameShape;
       
     } catch (error) {
       console.error(' Error creating OpenCascade frame structure:', error);
       throw error;
     }
+  }
+
+  // Wait for OpenCascade to finish loading then create geometry and display it.
+  window.ocjsReady.then(oc => {
+    console.log(' OpenCascade.js loaded successfully from unpkg CDN');
+    console.log(' Main callback executed at:', new Date().toISOString());
+    
+    // Build the frame model
+    const frameShape = buildFrameModel(oc);
+    
+    // Store the shape for mesh extraction
+    window.frameShape = frameShape;
     
     // Convert OpenCascade shape to Three.js mesh data
     function convertOpenCascadeToMesh(shape) {
