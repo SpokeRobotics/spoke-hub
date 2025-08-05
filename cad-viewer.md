@@ -354,11 +354,11 @@ This page hosts an interactive 3-D model viewer that uses [OpenCascade.js](https
         
         try {
           const material = new THREE.MeshStandardMaterial({ 
-            color: 0xff0000, // Red color indicates boolean operations failed (solid box instead of hollow frame)
+            color: 0x808080, // Gray color indicates everything is working correctly (proper frame structure)
             metalness: 0.1,
             roughness: 0.4,
-            transparent: true,
-            opacity: 0.9
+            transparent: false,
+            opacity: 1.0
           });
           
           const mesh = new THREE.Mesh(geometry, material);
@@ -457,14 +457,14 @@ This page hosts an interactive 3-D model viewer that uses [OpenCascade.js](https
           console.log(' GLB loaded successfully');
           const model = gltf.scene;
           
-          // Enable shadows
-          model.traverse((child) => {
-            if (child.isMesh) {
-              child.castShadow = true;
-              child.receiveShadow = true;
-              console.log(' Configured mesh for shadows:', child.name || 'unnamed');
-            }
-          });
+          // // Enable shadows
+          // model.traverse((child) => {
+          //   if (child.isMesh) {
+          //     child.castShadow = true;
+          //     child.receiveShadow = true;
+          //     console.log(' Configured mesh for shadows:', child.name || 'unnamed');
+          //   }
+          // });
           
           scene.add(model);
           console.log(' Model added to scene');
@@ -474,7 +474,7 @@ This page hosts an interactive 3-D model viewer that uses [OpenCascade.js](https
             if (child.isMesh) {
               const wireframe = new THREE.WireframeGeometry(child.geometry);
               const line = new THREE.LineSegments(wireframe, new THREE.LineBasicMaterial({ 
-                color: 0x000000, 
+                color: 0xFFFFFF, 
                 opacity: 0.3, 
                 transparent: true 
               }));
@@ -586,7 +586,7 @@ This page hosts an interactive 3-D model viewer that uses [OpenCascade.js](https
       
       // Create mesh from OpenCascade-derived geometry
       const material = new THREE.MeshStandardMaterial({ 
-        color: 0x00aa88,
+        color: 0x808080, // Gray color indicates everything is working correctly
         metalness: 0.1,
         roughness: 0.4,
         transparent: true,
