@@ -79,7 +79,8 @@ After including this, you can:
 
   <span style="margin: 0 10px; font-weight: bold; color: #495057; vertical-align: middle;"> </span>
 
-  <button id="{{ include.container_id | default: 'ocjs-viewer' }}-spin-toggle" style="margin: 0 15px 0 0; padding: 8px 16px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">SPIN: ON</button>
+  <button id="{{ include.container_id | default: 'ocjs-viewer' }}-spin-toggle" style="margin: 0 5px 0 0; padding: 8px 16px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">SPIN: ON</button>
+  <button id="{{ include.container_id | default: 'ocjs-viewer' }}-frame-toggle" style="margin: 0 15px 0 0; padding: 8px 16px; background: #ffc107; color: black; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">FRAME: LIGHT</button>
 </div>
 
 <!-- Import map for OpenCascade.js and Three.js ES modules -->
@@ -150,6 +151,9 @@ window.cascadeViewer = {
   // Spin state - default to true (spinning enabled)
   spinEnabled: true,
 
+  // Frame rendering mode - HIDE, LIGHT, DARK
+  frameMode: 'LIGHT',
+
   // Show export buttons after successful model load
   showExportButtons: function(containerId) {
     const exportButtonsId = containerId + '-export-buttons';
@@ -173,6 +177,7 @@ window.cascadeViewer = {
   setupExportHandlers: function(containerId) {
     const editBtn = document.getElementById(containerId + '-edit-code');
     const spinBtn = document.getElementById(containerId + '-spin-toggle');
+    const frameBtn = document.getElementById(containerId + '-frame-toggle');
     const stepBtn = document.getElementById(containerId + '-export-step');
     const stlBtn = document.getElementById(containerId + '-export-stl');
     const gltfBtn = document.getElementById(containerId + '-export-gltf');
@@ -182,6 +187,9 @@ window.cascadeViewer = {
     }
     if (spinBtn) {
       spinBtn.onclick = () => this.toggleSpin(containerId);
+    }
+    if (frameBtn) {
+      frameBtn.onclick = () => this.toggleFrame(containerId);
     }
     if (stepBtn) {
       stepBtn.onclick = () => this.exportSTEP();
@@ -208,6 +216,72 @@ window.cascadeViewer = {
     const status = this.spinEnabled ? 'enabled' : 'disabled';
     this.updateStatus(containerId, `Model spinning ${status}`, 'info', 2000);
     console.log(`🔄 Model spinning ${status}`);
+  },
+
+  // Toggle frame rendering mode: HIDE -> LIGHT -> DARK -> HIDE
+  toggleFrame: function(containerId) {
+    // Cycle through the three states
+    if (this.frameMode === 'HIDE') {
+      this.frameMode = 'LIGHT';
+    } else if (this.frameMode === 'LIGHT') {
+      this.frameMode = 'DARK';
+    } else {
+      this.frameMode = 'HIDE';
+    }
+    
+    const frameBtn = document.getElementById(containerId + '-frame-toggle');
+    if (frameBtn) {
+      frameBtn.textContent = `FRAME: ${this.frameMode}`;
+      // Set button colors based on state
+      if (this.frameMode === 'HIDE') {
+        frameBtn.style.background = '#6c757d'; // Gray for hidden
+      } else if (this.frameMode === 'LIGHT') {
+        frameBtn.style.background = '#ffc107'; // Yellow for light
+        frameBtn.style.color = 'black';
+      } else { // DARK
+        frameBtn.style.background = '#343a40'; // Dark gray for dark
+        frameBtn.style.color = 'white';
+      }
+    }
+    
+    // Apply the frame rendering changes to the current model
+    this.updateFrameRendering(containerId);
+    
+    // Update status to show frame state change
+    this.updateStatus(containerId, `Frame rendering: ${this.frameMode}`, 'info', 2000);
+    console.log(`🔺 Frame rendering: ${this.frameMode}`);
+  },
+
+  // Update frame rendering based on current frameMode
+  updateFrameRendering: function(containerId) {
+    // Control the wireframe skeleton (frame outlines) instead of main polygons
+    if (window.cadWireframe) {
+      if (this.frameMode === 'HIDE') {
+        // Hide the wireframe skeleton
+        window.cadWireframe.visible = false;
+      } else {
+        // Show the wireframe skeleton
+        window.cadWireframe.visible = true;
+        
+        // Update wireframe material based on LIGHT or DARK mode
+        if (window.cadWireframe.material) {
+          if (this.frameMode === 'LIGHT') {
+            // Light mode - bright wireframe
+            window.cadWireframe.material.color.setHex(0xffffff); // White
+            window.cadWireframe.material.opacity = 0.6;
+            window.cadWireframe.material.transparent = true;
+          } else { // DARK
+            // Dark mode - dark wireframe
+            window.cadWireframe.material.color.setHex(0x333333); // Dark gray
+            window.cadWireframe.material.opacity = 0.8;
+            window.cadWireframe.material.transparent = true;
+          }
+          window.cadWireframe.material.needsUpdate = true;
+        }
+      }
+    }
+    
+    console.log(`🔺 Applied wireframe rendering: ${this.frameMode}`);
   },
 
   // Get page name for filename
