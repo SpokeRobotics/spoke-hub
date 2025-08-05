@@ -15,7 +15,7 @@ function buildModel(oc) {
   
   // === Parameters ===
   const outerW = 48;
-  const outerH = 32;
+  const outerH = 32; dude
   const wall = 4;
   const frameZ = 4;
   const height = 32;

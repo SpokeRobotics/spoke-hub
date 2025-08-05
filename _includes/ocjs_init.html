@@ -70,13 +70,16 @@ After including this, you can:
     <button id="{{ include.container_id | default: 'ocjs-viewer' }}-run-code" style="background: #28a745; color: white; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; font-size: 14px; margin: 0 5px;">RUN</button>
     <button id="{{ include.container_id | default: 'ocjs-viewer' }}-undo-code" style="background: #ffc107; color: #212529; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; font-size: 14px; margin: 0 5px;">UNDO</button>
     <button id="{{ include.container_id | default: 'ocjs-viewer' }}-reset-code" style="background: #6c757d; color: white; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; font-size: 14px; margin: 0 5px;">RESET</button>
-    <span style="margin: 0 15px; font-weight: bold; color: #495057; vertical-align: middle;">|</span>
   </span>
   
   <span style="margin: 0 10px; font-weight: bold; color: #495057; vertical-align: middle;">Export:</span>
   <button id="{{ include.container_id | default: 'ocjs-viewer' }}-export-step" style="margin: 0 5px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">STEP</button>
   <button id="{{ include.container_id | default: 'ocjs-viewer' }}-export-stl" style="margin: 0 5px; padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">STL</button>
   <button id="{{ include.container_id | default: 'ocjs-viewer' }}-export-gltf" style="margin: 0 5px; padding: 8px 16px; background: #ffc107; color: black; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">GLTF</button>
+
+  <span style="margin: 0 10px; font-weight: bold; color: #495057; vertical-align: middle;"> </span>
+
+  <button id="{{ include.container_id | default: 'ocjs-viewer' }}-spin-toggle" style="margin: 0 15px 0 0; padding: 8px 16px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">SPIN: ON</button>
 </div>
 
 <!-- Import map for OpenCascade.js and Three.js ES modules -->
@@ -140,6 +143,9 @@ window.cascadeViewer = {
     containerId: null
   },
 
+  // Spin state - default to true (spinning enabled)
+  spinEnabled: true,
+
   // Show export buttons after successful model load
   showExportButtons: function(containerId) {
     const exportButtonsId = containerId + '-export-buttons';
@@ -162,12 +168,16 @@ window.cascadeViewer = {
   // Setup export button event handlers
   setupExportHandlers: function(containerId) {
     const editBtn = document.getElementById(containerId + '-edit-code');
+    const spinBtn = document.getElementById(containerId + '-spin-toggle');
     const stepBtn = document.getElementById(containerId + '-export-step');
     const stlBtn = document.getElementById(containerId + '-export-stl');
     const gltfBtn = document.getElementById(containerId + '-export-gltf');
 
     if (editBtn) {
       editBtn.onclick = () => this.showCodeEditor(containerId);
+    }
+    if (spinBtn) {
+      spinBtn.onclick = () => this.toggleSpin(containerId);
     }
     if (stepBtn) {
       stepBtn.onclick = () => this.exportSTEP();
@@ -179,6 +189,21 @@ window.cascadeViewer = {
       gltfBtn.onclick = () => this.exportGLTF();
     }
     console.log('✅ Export and edit button handlers setup for container:', containerId);
+  },
+
+  // Toggle spin animation on/off
+  toggleSpin: function(containerId) {
+    this.spinEnabled = !this.spinEnabled;
+    const spinBtn = document.getElementById(containerId + '-spin-toggle');
+    if (spinBtn) {
+      spinBtn.textContent = this.spinEnabled ? 'SPIN: ON' : 'SPIN: OFF';
+      spinBtn.style.background = this.spinEnabled ? '#17a2b8' : '#6c757d';
+    }
+    
+    // Update status to show spin state change
+    const status = this.spinEnabled ? 'enabled' : 'disabled';
+    this.updateStatus(containerId, `Model spinning ${status}`, 'info', 2000);
+    console.log(`🔄 Model spinning ${status}`);
   },
 
   // Get page name for filename
@@ -762,8 +787,8 @@ window.cascadeViewer = {
       requestAnimationFrame(animate);
       controls.update();
       
-      // Rotate the CAD model and wireframe if they exist
-      if (window.cadModel && window.cadWireframe) {
+      // Rotate the CAD model and wireframe if they exist and spinning is enabled
+      if (window.cadModel && window.cadWireframe && window.cascadeViewer.spinEnabled) {
         window.cadModel.rotation.x += 0.005;
         window.cadModel.rotation.y += 0.005;
         window.cadWireframe.rotation.x += 0.005;
@@ -872,10 +897,13 @@ window.cascadeViewer = {
       requestAnimationFrame(animate);
       controls.update();
       
-      mesh.rotation.x += 0.005;
-      mesh.rotation.y += 0.005;
-      line.rotation.x += 0.005;
-      line.rotation.y += 0.005;
+      // Only rotate if spinning is enabled
+      if (window.cascadeViewer.spinEnabled) {
+        mesh.rotation.x += 0.005;
+        mesh.rotation.y += 0.005;
+        line.rotation.x += 0.005;
+        line.rotation.y += 0.005;
+      }
       
       renderer.render(scene, camera);
     }
@@ -1108,13 +1136,15 @@ window.cascadeViewer = {
     console.log('🔍 Populating editor with code for:', containerId);
     console.log('🔍 Stored originalCode:', this.currentModelData.originalCode ? this.currentModelData.originalCode.substring(0, 100) + '...' : 'null');
     
-    // Try multiple sources for the code
-    let currentCode = this.currentModelData.originalCode || 
+    // Try multiple sources for the code, prioritizing the last successfully run code
+    let currentCode = (this.editorVersions && this.editorVersions[containerId] && this.editorVersions[containerId].lastRunCode) ||
+                     this.currentModelData.originalCode || 
                      (window.cascadeOriginalCode && window.cascadeOriginalCode[containerId]) ||
                      this.extractCodeFromPage(containerId) || 
                      this.extractCodeFromMarkdown();
     
     console.log('🔍 Code sources checked:');
+    console.log('  - lastRunCode (priority):', this.editorVersions && this.editorVersions[containerId] && this.editorVersions[containerId].lastRunCode ? 'found' : 'null');
     console.log('  - currentModelData.originalCode:', this.currentModelData.originalCode ? 'found' : 'null');
     console.log('  - global backup:', window.cascadeOriginalCode && window.cascadeOriginalCode[containerId] ? 'found' : 'null');
     console.log('  - page extraction: will try if needed');
@@ -1446,27 +1476,27 @@ window.cascadeViewer.autoDetectAndExecute = function() {
     
     // Process each cascade block
     cascadeBlocks.forEach((codeBlock, index) => {
+      // Get the code content (declare outside try block for error handler access)
+      const codeContent = codeBlock.textContent || codeBlock.innerText;
+      
+      // Find the container for this code block (declare outside try block for error handler access)
+      let containerId = 'viewer'; // default
+      
+      // Look for a viewer div near this code block
+      let parent = codeBlock.parentElement;
+      while (parent && parent !== document.body) {
+        const viewerDiv = parent.querySelector('div[id*="viewer"]');
+        if (viewerDiv) {
+          containerId = viewerDiv.id;
+          break;
+        }
+        parent = parent.parentElement;
+      }
+      
       try {
         console.log(`🚀 Processing cascade block ${index + 1}...`);
-        
-        // Get the code content
-        const codeContent = codeBlock.textContent || codeBlock.innerText;
         console.log(`📝 Code content (${codeContent.length} chars):`, codeContent.substring(0, 100) + '...');
-        
-        // Find the container for this code block (look for nearby viewer divs)
-        let containerId = 'viewer'; // default
-        
-        // Look for a viewer div near this code block
-        let parent = codeBlock.parentElement;
-        while (parent && parent !== document.body) {
-          const viewerDiv = parent.querySelector('div[id*="viewer"]');
-          if (viewerDiv) {
-            containerId = viewerDiv.id;
-            console.log(`🎯 Found viewer container: ${containerId}`);
-            break;
-          }
-          parent = parent.parentElement;
-        }
+        console.log(`🎯 Found viewer container: ${containerId}`);
         
         // Create a function wrapper and execute the code
         const functionWrapper = `
@@ -1539,28 +1569,58 @@ window.cascadeViewer.autoDetectAndExecute = function() {
       } catch (error) {
         console.error(`❌ Error processing cascade block ${index + 1}:`, error);
         
-        // Show error message in place of code block
-        const errorDiv = document.createElement('div');
-        errorDiv.innerHTML = `
-          <div style="padding: 20px; text-align: center; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; margin: 10px 0;">
-            <p>❌ <strong>Cascade Model ${index + 1} - Error</strong></p>
-            <p><em>${error.message}</em></p>
-            <details style="margin-top: 10px; text-align: left;">
-              <summary>Show Code</summary>
-              <pre style="background: #f8f9fa; padding: 10px; margin-top: 10px; border-radius: 4px; overflow-x: auto;"><code>${codeBlock.textContent || codeBlock.innerText}</code></pre>
-            </details>
-          </div>
-        `;
+        // Store the original code for the editor (even on error)
+        this.currentModelData.originalCode = codeContent;
+        console.log('📝 Stored original code for editor after error (' + codeContent.length + ' chars)');
         
-        // Find the pre element containing this code block and replace it
+        // Also store it globally as a backup
+        if (!window.cascadeOriginalCode) {
+          window.cascadeOriginalCode = {};
+        }
+        window.cascadeOriginalCode[containerId] = codeContent;
+        
+        // Find the pre element containing this code block and hide it (don't replace with error div)
         let preElement = codeBlock.parentElement;
         while (preElement && preElement.tagName !== 'PRE') {
           preElement = preElement.parentElement;
         }
         
         if (preElement) {
-          preElement.parentNode.replaceChild(errorDiv, preElement);
+          preElement.style.display = 'none';
         }
+        
+        // Create a minimal viewer container for the editor to attach to (no redundant message)
+        const viewerDiv = document.createElement('div');
+        viewerDiv.id = containerId;
+        viewerDiv.style.cssText = 'width: 100%; height: 400px; max-width: 100%; margin: 10px auto; border: 1px solid #ccc; background: #f8f9fa; display: none;';
+        
+        // Insert the viewer container after the hidden pre element
+        if (preElement && preElement.parentNode) {
+          preElement.parentNode.insertBefore(viewerDiv, preElement.nextSibling);
+        }
+        
+        // Automatically open the code editor after a short delay
+        setTimeout(() => {
+          console.log('🔧 Auto-opening editor due to code failure...');
+          
+          // Show export buttons (needed for editor to work)
+          this.showExportButtons(containerId);
+          
+          // Show the code editor
+          this.showCodeEditor(containerId);
+          
+          // Update status to indicate auto-opening (ephemeral notification)
+          this.updateStatus(containerId, `Code failed: ${error.message} - Editor opened for debugging`, 'error', 0);
+          
+          // Show the error in the editor's error display as well (required by user)
+          const errorDisplay = document.getElementById(containerId + '-error-display');
+          const errorMessage = document.getElementById(containerId + '-error-message');
+          if (errorDisplay && errorMessage) {
+            errorMessage.textContent = `Error in cascade code:\n${error.message}\n\nStack trace:\n${error.stack || 'No stack trace available'}`;
+            errorDisplay.style.display = 'block';
+          }
+          
+        }, 500); // Small delay to ensure DOM is ready
       }
     });
     
