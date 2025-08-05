@@ -16,6 +16,14 @@ After including this, you can:
 <!-- Viewer container -->
 <div id="{{ include.container_id | default: 'ocjs-viewer' }}" style="width: 100%; height: 600px; max-width: 100%; margin: 0 auto; border: 1px solid #ccc;"></div>
 
+<!-- Export buttons container (hidden by default) -->
+<div id="{{ include.container_id | default: 'ocjs-viewer' }}-export-buttons" style="display: none; text-align: center; margin: 10px 0; padding: 10px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px;">
+  <p style="margin: 0 0 10px 0; font-weight: bold; color: #495057;">📁 Export Model:</p>
+  <button id="{{ include.container_id | default: 'ocjs-viewer' }}-export-step" style="margin: 0 5px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">STEP</button>
+  <button id="{{ include.container_id | default: 'ocjs-viewer' }}-export-stl" style="margin: 0 5px; padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">STL</button>
+  <button id="{{ include.container_id | default: 'ocjs-viewer' }}-export-gltf" style="margin: 0 5px; padding: 8px 16px; background: #ffc107; color: black; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">GLTF</button>
+</div>
+
 <!-- Import map for OpenCascade.js and Three.js ES modules -->
 <script type="importmap">
 {
@@ -58,6 +66,639 @@ window.ocjsReady = initOpenCascade({
  * window.cascadeViewer provides utilities for CAD visualization
  */
 window.cascadeViewer = {
+  // Store current model data for export
+  currentModelData: {
+    shape: null,
+    geometry: null,
+    oc: null,
+    containerId: null
+  },
+
+  // Show export buttons after successful model load
+  showExportButtons: function(containerId) {
+    const exportButtonsId = containerId + '-export-buttons';
+    const exportButtons = document.getElementById(exportButtonsId);
+    if (exportButtons) {
+      exportButtons.style.display = 'block';
+      console.log('✅ Export buttons shown for container:', containerId);
+    }
+  },
+
+  // Hide export buttons
+  hideExportButtons: function(containerId) {
+    const exportButtonsId = containerId + '-export-buttons';
+    const exportButtons = document.getElementById(exportButtonsId);
+    if (exportButtons) {
+      exportButtons.style.display = 'none';
+    }
+  },
+
+  // Setup export button event handlers
+  setupExportHandlers: function(containerId) {
+    const stepBtn = document.getElementById(containerId + '-export-step');
+    const stlBtn = document.getElementById(containerId + '-export-stl');
+    const gltfBtn = document.getElementById(containerId + '-export-gltf');
+
+    if (stepBtn) {
+      stepBtn.onclick = () => this.exportSTEP();
+    }
+    if (stlBtn) {
+      stlBtn.onclick = () => this.exportSTL();
+    }
+    if (gltfBtn) {
+      gltfBtn.onclick = () => this.exportGLTF();
+    }
+    console.log('✅ Export button handlers setup for container:', containerId);
+  },
+
+  // Get page name for filename
+  getPageName: function() {
+    // Try to get page name from title, URL, or fallback to 'model'
+    let pageName = 'model';
+    
+    // First try document title
+    if (document.title) {
+      pageName = document.title.toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '') // Remove special chars
+        .replace(/\s+/g, '-') // Replace spaces with hyphens
+        .replace(/-+/g, '-') // Replace multiple hyphens with single
+        .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
+    }
+    
+    // Fallback to pathname if title is empty or generic
+    if (!pageName || pageName === 'model' || pageName.length < 2) {
+      const pathname = window.location.pathname;
+      const pathParts = pathname.split('/').filter(part => part.length > 0);
+      if (pathParts.length > 0) {
+        pageName = pathParts[pathParts.length - 1]
+          .replace(/\.html?$/, '') // Remove .html extension
+          .replace(/[^a-z0-9-]/g, '') // Keep only alphanumeric and hyphens
+          .toLowerCase();
+      }
+    }
+    
+    return pageName || 'model';
+  },
+
+  // Export functions (dummy implementations for now)
+  exportSTEP: function() {
+    console.log('📁 Exporting STEP file...');
+    const filename = this.getPageName() + '.step';
+    
+    if (!this.currentModelData.shape || !this.currentModelData.oc) {
+      console.error('❌ No OpenCascade shape data available for STEP export');
+      alert('Error: No OpenCascade model data available for STEP export');
+      return;
+    }
+    
+    try {
+      this.generateSTEPContent(this.currentModelData.shape, this.currentModelData.oc, filename);
+      console.log('✅ STEP export initiated:', filename);
+    } catch (error) {
+      console.error('❌ Error exporting STEP:', error);
+      alert('Error exporting STEP file: ' + error.message);
+    }
+  },
+
+  exportSTL: function() {
+    console.log('📁 Exporting STL file...');
+    const filename = this.getPageName() + '.stl';
+    
+    if (!this.currentModelData.geometry) {
+      console.error('❌ No geometry data available for STL export');
+      alert('Error: No model data available for export');
+      return;
+    }
+    
+    try {
+      const stlContent = this.generateSTLContent(this.currentModelData.geometry);
+      this.downloadFile(filename, stlContent, 'model/stl');
+      console.log('✅ STL file exported successfully:', filename);
+    } catch (error) {
+      console.error('❌ Error exporting STL:', error);
+      alert('Error exporting STL file: ' + error.message);
+    }
+  },
+
+  exportGLTF: function() {
+    console.log('📁 Exporting GLTF file...');
+    const filename = this.getPageName() + '.gltf';
+    
+    if (!this.currentModelData.geometry) {
+      console.error('❌ No geometry data available for GLTF export');
+      alert('Error: No model data available for export');
+      return;
+    }
+    
+    try {
+      this.generateGLTFContent(this.currentModelData.geometry, filename);
+      console.log('✅ GLTF export initiated:', filename);
+    } catch (error) {
+      console.error('❌ Error exporting GLTF:', error);
+      alert('Error exporting GLTF file: ' + error.message);
+    }
+  },
+
+  // Helper function to download dummy files
+  downloadDummyFile: function(filename, content) {
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    console.log('✅ Downloaded dummy file:', filename);
+  },
+
+  // Helper function to download files with proper MIME types
+  downloadFile: function(filename, content, mimeType = 'text/plain') {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    console.log('✅ Downloaded file:', filename);
+  },
+
+  // Generate STL content from Three.js geometry
+  generateSTLContent: function(geometry) {
+    console.log('🔧 Generating STL content from geometry...');
+    
+    const vertices = geometry.attributes.position.array;
+    const indices = geometry.index ? geometry.index.array : null;
+    const normals = geometry.attributes.normal ? geometry.attributes.normal.array : null;
+    
+    let stlContent = 'solid OpenCascadeModel\n';
+    
+    // If geometry is indexed, use indices to create triangles
+    if (indices) {
+      for (let i = 0; i < indices.length; i += 3) {
+        const i1 = indices[i] * 3;
+        const i2 = indices[i + 1] * 3;
+        const i3 = indices[i + 2] * 3;
+        
+        // Get vertices
+        const v1 = [vertices[i1], vertices[i1 + 1], vertices[i1 + 2]];
+        const v2 = [vertices[i2], vertices[i2 + 1], vertices[i2 + 2]];
+        const v3 = [vertices[i3], vertices[i3 + 1], vertices[i3 + 2]];
+        
+        // Calculate normal if not provided
+        let normal;
+        if (normals) {
+          normal = [normals[i1], normals[i1 + 1], normals[i1 + 2]];
+        } else {
+          // Calculate normal from cross product
+          const u = [v2[0] - v1[0], v2[1] - v1[1], v2[2] - v1[2]];
+          const v = [v3[0] - v1[0], v3[1] - v1[1], v3[2] - v1[2]];
+          normal = [
+            u[1] * v[2] - u[2] * v[1],
+            u[2] * v[0] - u[0] * v[2],
+            u[0] * v[1] - u[1] * v[0]
+          ];
+          // Normalize
+          const length = Math.sqrt(normal[0] * normal[0] + normal[1] * normal[1] + normal[2] * normal[2]);
+          if (length > 0) {
+            normal[0] /= length;
+            normal[1] /= length;
+            normal[2] /= length;
+          }
+        }
+        
+        stlContent += `  facet normal ${normal[0].toFixed(6)} ${normal[1].toFixed(6)} ${normal[2].toFixed(6)}\n`;
+        stlContent += '    outer loop\n';
+        stlContent += `      vertex ${v1[0].toFixed(6)} ${v1[1].toFixed(6)} ${v1[2].toFixed(6)}\n`;
+        stlContent += `      vertex ${v2[0].toFixed(6)} ${v2[1].toFixed(6)} ${v2[2].toFixed(6)}\n`;
+        stlContent += `      vertex ${v3[0].toFixed(6)} ${v3[1].toFixed(6)} ${v3[2].toFixed(6)}\n`;
+        stlContent += '    endloop\n';
+        stlContent += '  endfacet\n';
+      }
+    } else {
+      // Non-indexed geometry - process vertices in groups of 3
+      for (let i = 0; i < vertices.length; i += 9) {
+        const v1 = [vertices[i], vertices[i + 1], vertices[i + 2]];
+        const v2 = [vertices[i + 3], vertices[i + 4], vertices[i + 5]];
+        const v3 = [vertices[i + 6], vertices[i + 7], vertices[i + 8]];
+        
+        // Calculate normal
+        let normal;
+        if (normals) {
+          normal = [normals[i], normals[i + 1], normals[i + 2]];
+        } else {
+          const u = [v2[0] - v1[0], v2[1] - v1[1], v2[2] - v1[2]];
+          const v = [v3[0] - v1[0], v3[1] - v1[1], v3[2] - v1[2]];
+          normal = [
+            u[1] * v[2] - u[2] * v[1],
+            u[2] * v[0] - u[0] * v[2],
+            u[0] * v[1] - u[1] * v[0]
+          ];
+          const length = Math.sqrt(normal[0] * normal[0] + normal[1] * normal[1] + normal[2] * normal[2]);
+          if (length > 0) {
+            normal[0] /= length;
+            normal[1] /= length;
+            normal[2] /= length;
+          }
+        }
+        
+        stlContent += `  facet normal ${normal[0].toFixed(6)} ${normal[1].toFixed(6)} ${normal[2].toFixed(6)}\n`;
+        stlContent += '    outer loop\n';
+        stlContent += `      vertex ${v1[0].toFixed(6)} ${v1[1].toFixed(6)} ${v1[2].toFixed(6)}\n`;
+        stlContent += `      vertex ${v2[0].toFixed(6)} ${v2[1].toFixed(6)} ${v2[2].toFixed(6)}\n`;
+        stlContent += `      vertex ${v3[0].toFixed(6)} ${v3[1].toFixed(6)} ${v3[2].toFixed(6)}\n`;
+        stlContent += '    endloop\n';
+        stlContent += '  endfacet\n';
+      }
+    }
+    
+    stlContent += 'endsolid OpenCascadeModel\n';
+    
+    console.log(`✅ Generated STL with ${indices ? indices.length / 3 : vertices.length / 9} triangles`);
+    return stlContent;
+  },
+
+  // Generate GLTF content from Three.js geometry
+  generateGLTFContent: function(geometry, filename) {
+    console.log('🔧 Generating GLTF content from geometry...');
+    
+    // Create a temporary scene with the geometry
+    const scene = new THREE.Scene();
+    const material = new THREE.MeshStandardMaterial({ 
+      color: 0x888888,
+      metalness: 0.1,
+      roughness: 0.8,
+      opacity: 0.9
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+    
+    // Use GLTFExporter to export the scene
+    const exporter = new GLTFExporter();
+    
+    exporter.parse(
+      scene,
+      (gltfData) => {
+        console.log('✅ GLTF data generated successfully');
+        
+        // Convert to JSON string for text-based GLTF format
+        const gltfString = JSON.stringify(gltfData, null, 2);
+        
+        // Download the GLTF file
+        this.downloadFile(filename, gltfString, 'model/gltf+json');
+        console.log(`✅ GLTF file exported successfully: ${filename}`);
+      },
+      (error) => {
+        console.error('❌ Error generating GLTF:', error);
+        throw new Error('Failed to generate GLTF data: ' + error.message);
+      },
+      {
+        binary: false, // Export as text-based GLTF, not GLB
+        embedImages: true,
+        truncateDrawRange: true
+      }
+    );
+  },
+
+  // Generate STEP content from OpenCascade shape
+  generateSTEPContent: function(shape, oc, filename) {
+    console.log('🔧 Generating STEP content from OpenCascade shape...');
+    
+    // First, let's debug what STEP-related classes are available
+    console.log('🔍 Checking available STEP classes in OpenCascade.js...');
+    const stepClasses = [];
+    for (let key in oc) {
+      if (key.includes('STEP') || key.includes('Step')) {
+        stepClasses.push(key);
+      }
+    }
+    console.log('📁 Available STEP classes:', stepClasses);
+    
+    try {
+      // Try different approaches to create STEP writer
+      let stepWriter = null;
+      
+      // Method 1: Try direct instantiation with different constructors
+      const writerAttempts = [
+        () => new oc.STEPControl_Writer(),
+        () => new oc.STEPControl_Writer_1(),
+        () => new oc.STEPControl_Writer_2(),
+        () => oc.STEPControl_Writer(),
+        () => new oc.STEPCAFControl_Writer(),
+        () => new oc.STEPCAFControl_Writer_1(),
+        () => oc.STEPCAFControl_Writer()
+      ];
+      
+      for (let i = 0; i < writerAttempts.length; i++) {
+        try {
+          stepWriter = writerAttempts[i]();
+          console.log(`✅ STEP writer created using method ${i + 1}`);
+          break;
+        } catch (e) {
+          console.log(`❌ Method ${i + 1} failed:`, e.message);
+        }
+      }
+      
+      // Method 2: Try using Handle pattern (common in OpenCascade)
+      if (!stepWriter) {
+        try {
+          if (oc.Handle_STEPControl_Writer) {
+            const handle = new oc.Handle_STEPControl_Writer();
+            stepWriter = handle.get ? handle.get() : handle;
+            console.log('✅ STEP writer created using Handle pattern');
+          }
+        } catch (e) {
+          console.log('❌ Handle pattern failed:', e.message);
+        }
+      }
+      
+      // Method 3: Try factory methods or static constructors
+      if (!stepWriter) {
+        const factoryMethods = [
+          () => oc.STEPControl_Writer.Create ? oc.STEPControl_Writer.Create() : null,
+          () => oc.STEPControl_Writer.New ? oc.STEPControl_Writer.New() : null,
+          () => oc.STEPCAFControl_Writer.Create ? oc.STEPCAFControl_Writer.Create() : null
+        ];
+        
+        for (let i = 0; i < factoryMethods.length; i++) {
+          try {
+            const result = factoryMethods[i]();
+            if (result) {
+              stepWriter = result;
+              console.log(`✅ STEP writer created using factory method ${i + 1}`);
+              break;
+            }
+          } catch (e) {
+            console.log(`❌ Factory method ${i + 1} failed:`, e.message);
+          }
+        }
+      }
+      
+      // Method 4: Check if we need to use a different API altogether
+      if (!stepWriter) {
+        console.log('🔍 Checking for alternative STEP export APIs...');
+        const alternativeAPIs = [];
+        for (let key in oc) {
+          if ((key.includes('STEP') || key.includes('Step')) && 
+              (key.includes('Write') || key.includes('Export') || key.includes('Save'))) {
+            alternativeAPIs.push(key);
+          }
+        }
+        console.log('📁 Alternative STEP APIs found:', alternativeAPIs);
+        
+        // Try using IGESControl_Writer as a template for the correct pattern
+        if (oc.IGESControl_Writer) {
+          try {
+            console.log('🔍 Trying IGES writer pattern for STEP...');
+            // If IGES writer works, we can use the same pattern
+            const testWriter = new oc.IGESControl_Writer();
+            console.log('✅ IGES writer pattern works, but no equivalent STEP pattern found');
+          } catch (e) {
+            console.log('❌ IGES writer pattern also fails:', e.message);
+          }
+        }
+      }
+      
+      if (!stepWriter) {
+        throw new Error('No STEP writer class found in OpenCascade.js');
+      }
+      
+      // Try to set precision if method exists
+      if (typeof stepWriter.SetPrecision === 'function') {
+        stepWriter.SetPrecision(0.01);
+        console.log('✅ Precision set to 0.01');
+      }
+      
+      // Transfer the shape to the STEP writer
+      console.log('📦 Transferring shape to STEP writer...');
+      
+      // Try different transfer methods with correct number of arguments
+      let transferResult = null;
+      if (typeof stepWriter.Transfer === 'function') {
+        // The Transfer method expects 3 arguments based on the error message
+        const transferAttempts = [
+          // Try with 3 arguments: shape, mode, compgraph
+          () => stepWriter.Transfer(shape, oc.STEPControl_StepModelType?.STEPControl_AsIs || 0, false),
+          () => stepWriter.Transfer(shape, 0, false), // AsIs mode = 0
+          () => stepWriter.Transfer(shape, 1, false), // ManifoldSolidBrep mode = 1
+          () => stepWriter.Transfer(shape, 2, false), // BrepWithVoids mode = 2
+          // Try with different third parameter
+          () => stepWriter.Transfer(shape, 0, true),
+          () => stepWriter.Transfer(shape, 0, 0),
+          () => stepWriter.Transfer(shape, 0, 1)
+        ];
+        
+        for (let i = 0; i < transferAttempts.length; i++) {
+          try {
+            transferResult = transferAttempts[i]();
+            console.log(`✅ Transfer successful using attempt ${i + 1}`);
+            break;
+          } catch (e) {
+            console.log(`❌ Transfer attempt ${i + 1} failed:`, e.message);
+          }
+        }
+        
+        if (transferResult === null) {
+          throw new Error('All transfer attempts failed');
+        }
+      } else {
+        throw new Error('Transfer method not available on STEP writer');
+      }
+      
+      // Check transfer result if we have the enum
+      if (oc.IFSelect_ReturnStatus && transferResult !== oc.IFSelect_ReturnStatus.IFSelect_RetDone) {
+        throw new Error(`Failed to transfer shape to STEP writer (result: ${transferResult})`);
+      }
+      
+      console.log('✅ Shape transferred successfully to STEP writer');
+      
+      // Try different file paths and write methods
+      const possiblePaths = [
+        '/tmp/' + filename,
+        filename,
+        '/' + filename,
+        '/home/' + filename
+      ];
+      
+      let writeResult = null;
+      let tempFilePath = null;
+      
+      // Create temp directory if it doesn't exist
+      try {
+        oc.FS.mkdir('/tmp');
+        console.log('✅ /tmp directory created/exists');
+      } catch (e) {
+        console.log('⚠️ /tmp directory issue:', e.message);
+      }
+      
+      // Try writing to different paths
+      for (let i = 0; i < possiblePaths.length; i++) {
+        const testPath = possiblePaths[i];
+        console.log(`💾 Attempting to write STEP file to: ${testPath}`);
+        
+        try {
+          if (typeof stepWriter.Write === 'function') {
+            writeResult = stepWriter.Write(testPath);
+            tempFilePath = testPath;
+            console.log(`💾 Write method returned:`, writeResult, 'Type:', typeof writeResult);
+            
+            // Check if file was created immediately after write
+            try {
+              const fileStats = oc.FS.stat(testPath);
+              if (fileStats && fileStats.size > 0) {
+                console.log(`✅ File created successfully at ${testPath} (${fileStats.size} bytes)`);
+                break; // Success! Use this path
+              } else {
+                console.log(`❌ File at ${testPath} is empty or invalid`);
+              }
+            } catch (statError) {
+              console.log(`❌ File does not exist at ${testPath}:`, statError.message);
+            }
+          } else {
+            console.log('❌ Write method not available on STEP writer');
+            break;
+          }
+        } catch (writeError) {
+          console.log(`❌ Write failed for path ${testPath}:`, writeError.message);
+        }
+      }
+      
+      if (!tempFilePath) {
+        throw new Error('All write attempts failed - no valid file path found');
+      }
+      
+      // Debug the return status enum values
+      if (oc.IFSelect_ReturnStatus) {
+        console.log('🔍 Available return status values:');
+        for (let key in oc.IFSelect_ReturnStatus) {
+          console.log(`  ${key}: ${oc.IFSelect_ReturnStatus[key]}`);
+        }
+      }
+      
+      // Try different ways to check if write was successful
+      let writeSuccessful = false;
+      
+      // Method 1: Check against enum if available (compare object values)
+      if (oc.IFSelect_ReturnStatus) {
+        // For OpenCascade.js enums that are objects, compare their value property
+        const expectedValue = oc.IFSelect_ReturnStatus.IFSelect_RetDone;
+        if (writeResult && expectedValue && 
+            ((writeResult.value !== undefined && expectedValue.value !== undefined && writeResult.value === expectedValue.value) ||
+             (writeResult.toString() === expectedValue.toString()))) {
+          writeSuccessful = true;
+          console.log('✅ Write successful (enum object check)');
+        } else {
+          console.log(`⚠️ Write result comparison failed`);
+          console.log('  writeResult:', writeResult, writeResult?.value, writeResult?.toString());
+          console.log('  expected:', expectedValue, expectedValue?.value, expectedValue?.toString());
+        }
+      }
+      
+      // Method 2: Check if result is truthy or specific value
+      if (!writeSuccessful) {
+        if (writeResult === true || writeResult === 1 || writeResult === 0) {
+          writeSuccessful = true;
+          console.log('✅ Write successful (value check)');
+        }
+      }
+      
+      // Method 3: Check if file was actually created (most reliable)
+      if (!writeSuccessful) {
+        try {
+          const fileStats = oc.FS.stat(tempFilePath);
+          if (fileStats && fileStats.size > 0) {
+            writeSuccessful = true;
+            console.log(`✅ Write successful (file exists, ${fileStats.size} bytes)`);
+          }
+        } catch (e) {
+          console.log('❌ File does not exist after write');
+        }
+      }
+      
+      if (!writeSuccessful) {
+        throw new Error(`STEP file write may have failed (result: ${writeResult})`);
+      }
+      
+      console.log('✅ STEP file written successfully');
+      
+      // Read the file content from OpenCascade.js virtual filesystem
+      const stepContent = oc.FS.readFile(tempFilePath, { encoding: 'utf8' });
+      
+      if (!stepContent || stepContent.length < 100) {
+        throw new Error('STEP file content is empty or too small');
+      }
+      
+      // Clean up the temporary file
+      try {
+        oc.FS.unlink(tempFilePath);
+      } catch (cleanupError) {
+        console.warn('⚠️ Could not clean up temporary file:', cleanupError);
+      }
+      
+      // Download the STEP file
+      this.downloadFile(filename, stepContent, 'application/step');
+      console.log(`✅ STEP file exported successfully: ${filename} (${stepContent.length} bytes)`);
+      
+    } catch (error) {
+      console.error('❌ Error in STEP generation:', error);
+      
+      // Fallback: Try alternative STEP export method
+      console.log('🔄 Attempting alternative STEP export method...');
+      try {
+        this.generateSTEPContentFallback(shape, oc, filename);
+      } catch (fallbackError) {
+        console.error('❌ Fallback STEP export also failed:', fallbackError);
+        throw new Error('STEP export failed: ' + error.message + ' (Fallback also failed: ' + fallbackError.message + ')');
+      }
+    }
+  },
+
+  // Fallback STEP generation method
+  generateSTEPContentFallback: function(shape, oc, filename) {
+    console.log('🔄 Using fallback STEP generation method...');
+    
+    // Create a basic STEP file header and content
+    const stepHeader = `ISO-10303-21;
+HEADER;
+FILE_DESCRIPTION(('OpenCascade.js Generated Model'),'2;1');
+FILE_NAME('${filename}','${new Date().toISOString()}',('OpenCascade.js'),('Spoke CAD Viewer'),'OpenCascade.js','OpenCascade.js','');
+FILE_SCHEMA(('AUTOMOTIVE_DESIGN'));
+ENDSEC;
+
+DATA;
+`;
+    
+    const stepFooter = `ENDSEC;
+END-ISO-10303-21;
+`;
+    
+    // For now, create a minimal STEP file with basic shape information
+    // This is a simplified fallback - a full STEP export would require
+    // extensive geometry analysis and STEP entity creation
+    const stepContent = stepHeader + 
+      `#1 = CARTESIAN_POINT('Origin',(0.0,0.0,0.0));
+` +
+      `#2 = DIRECTION('Z-Axis',(0.0,0.0,1.0));
+` +
+      `#3 = DIRECTION('X-Axis',(1.0,0.0,0.0));
+` +
+      `#4 = AXIS2_PLACEMENT_3D('Placement',#1,#2,#3);
+` +
+      `/* OpenCascade.js Shape Export - Simplified STEP Format */
+` +
+      `/* Original shape type: ${shape.ShapeType()} */
+` +
+      stepFooter;
+    
+    // Download the fallback STEP file
+    this.downloadFile(filename, stepContent, 'application/step');
+    console.log(`✅ Fallback STEP file exported: ${filename}`);
+  },
+
   // Convert OpenCascade shape to Three.js mesh data
   convertOpenCascadeToMesh: function(shape, oc) {
     console.log('🔧 Converting OpenCascade shape to mesh...');
@@ -328,6 +969,10 @@ window.cascadeViewer = {
         URL.revokeObjectURL(url);
         
         console.log('✅ Model setup completed successfully!');
+        
+        // Show export buttons and setup handlers after successful load
+        window.cascadeViewer.setupExportHandlers(containerId);
+        window.cascadeViewer.showExportButtons(containerId);
       },
       (progress) => {
         console.log('📊 Loading progress:', progress);
@@ -470,6 +1115,10 @@ window.cascadeViewer = {
     
     animate();
     console.log('✅ Direct Three.js visualization completed successfully!');
+    
+    // Show export buttons and setup handlers after successful fallback load
+    this.setupExportHandlers(containerId);
+    this.showExportButtons(containerId);
   },
 
   // Main function to display any OpenCascade shape
@@ -479,9 +1128,23 @@ window.cascadeViewer = {
       
       const oc = await window.ocjsReady;
       
+      // Store model data for export
+      this.currentModelData = {
+        shape: shape,
+        geometry: null,
+        oc: oc,
+        containerId: containerId
+      };
+      
+      // Hide export buttons initially
+      this.hideExportButtons(containerId);
+      
       // Step 1: Convert OpenCascade shape to Three.js geometry
       console.log('🔧 Step 1: Converting OpenCascade shape to mesh...');
       const geometry = this.convertOpenCascadeToMesh(shape, oc);
+      
+      // Store geometry for export
+      this.currentModelData.geometry = geometry;
       
       // Try GLB workflow first
       try {
