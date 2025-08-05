@@ -80,7 +80,8 @@ After including this, you can:
   <span style="margin: 0 10px; font-weight: bold; color: #495057; vertical-align: middle;"> </span>
 
   <button id="{{ include.container_id | default: 'ocjs-viewer' }}-spin-toggle" style="margin: 0 5px 0 0; padding: 8px 16px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">SPIN: ON</button>
-  <button id="{{ include.container_id | default: 'ocjs-viewer' }}-frame-toggle" style="margin: 0 15px 0 0; padding: 8px 16px; background: #ffc107; color: black; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">FRAME: LIGHT</button>
+  <button id="{{ include.container_id | default: 'ocjs-viewer' }}-frame-toggle" style="margin: 0 5px 0 0; padding: 8px 16px; background: #ffc107; color: black; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">FRAME: LIGHT</button>
+  <button id="{{ include.container_id | default: 'ocjs-viewer' }}-shading-toggle" style="margin: 0 15px 0 0; padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">SHADING: GRAY</button>
 </div>
 
 <!-- Import map for OpenCascade.js and Three.js ES modules -->
@@ -154,6 +155,9 @@ window.cascadeViewer = {
   // Frame rendering mode - HIDE, LIGHT, DARK
   frameMode: 'LIGHT',
 
+  // Shading mode - BLACK, GRAY, OFF
+  shadingMode: 'GRAY',
+
   // Show export buttons after successful model load
   showExportButtons: function(containerId) {
     const exportButtonsId = containerId + '-export-buttons';
@@ -178,6 +182,7 @@ window.cascadeViewer = {
     const editBtn = document.getElementById(containerId + '-edit-code');
     const spinBtn = document.getElementById(containerId + '-spin-toggle');
     const frameBtn = document.getElementById(containerId + '-frame-toggle');
+    const shadingBtn = document.getElementById(containerId + '-shading-toggle');
     const stepBtn = document.getElementById(containerId + '-export-step');
     const stlBtn = document.getElementById(containerId + '-export-stl');
     const gltfBtn = document.getElementById(containerId + '-export-gltf');
@@ -190,6 +195,9 @@ window.cascadeViewer = {
     }
     if (frameBtn) {
       frameBtn.onclick = () => this.toggleFrame(containerId);
+    }
+    if (shadingBtn) {
+      shadingBtn.onclick = () => this.toggleShading(containerId);
     }
     if (stepBtn) {
       stepBtn.onclick = () => this.exportSTEP();
@@ -252,6 +260,41 @@ window.cascadeViewer = {
     console.log(`🔺 Frame rendering: ${this.frameMode}`);
   },
 
+  // Toggle shading mode: BLACK -> GRAY -> OFF -> BLACK
+  toggleShading: function(containerId) {
+    // Cycle through the three states
+    if (this.shadingMode === 'BLACK') {
+      this.shadingMode = 'GRAY';
+    } else if (this.shadingMode === 'GRAY') {
+      this.shadingMode = 'OFF';
+    } else {
+      this.shadingMode = 'BLACK';
+    }
+    
+    const shadingBtn = document.getElementById(containerId + '-shading-toggle');
+    if (shadingBtn) {
+      shadingBtn.textContent = `SHADING: ${this.shadingMode}`;
+      // Set button colors based on state
+      if (this.shadingMode === 'BLACK') {
+        shadingBtn.style.background = '#343a40'; // Dark gray for black
+        shadingBtn.style.color = 'white';
+      } else if (this.shadingMode === 'GRAY') {
+        shadingBtn.style.background = '#6c757d'; // Gray
+        shadingBtn.style.color = 'white';
+      } else { // OFF
+        shadingBtn.style.background = '#dc3545'; // Red for off
+        shadingBtn.style.color = 'white';
+      }
+    }
+    
+    // Apply the shading changes to the current model
+    this.updateShading(containerId);
+    
+    // Update status to show shading state change
+    this.updateStatus(containerId, `Polygon shading: ${this.shadingMode}`, 'info', 2000);
+    console.log(`🎨 Polygon shading: ${this.shadingMode}`);
+  },
+
   // Update frame rendering based on current frameMode
   updateFrameRendering: function(containerId) {
     // Control the wireframe skeleton (frame outlines) instead of main polygons
@@ -282,6 +325,40 @@ window.cascadeViewer = {
     }
     
     console.log(`🔺 Applied wireframe rendering: ${this.frameMode}`);
+  },
+
+  // Update shading based on current shadingMode
+  updateShading: function(containerId) {
+    // Control the main CAD model polygon shading
+    if (window.cadModel) {
+      if (this.shadingMode === 'OFF') {
+        // Hide the main polygon model
+        window.cadModel.visible = false;
+      } else {
+        // Show the main polygon model
+        window.cadModel.visible = true;
+        
+        // Update material based on BLACK or GRAY mode
+        window.cadModel.traverse((child) => {
+          if (child.isMesh && child.material) {
+            if (this.shadingMode === 'BLACK') {
+              // Black shading
+              child.material.color.setHex(0x202020); // Dark gray/black
+              child.material.opacity = 1.0;
+              child.material.transparent = false;
+            } else { // GRAY
+              // Gray shading
+              child.material.color.setHex(0x808080); // Medium gray
+              child.material.opacity = 1.0;
+              child.material.transparent = false;
+            }
+            child.material.needsUpdate = true;
+          }
+        });
+      }
+    }
+    
+    console.log(`🎨 Applied polygon shading: ${this.shadingMode}`);
   },
 
   // Get page name for filename
