@@ -62,26 +62,30 @@ After including this, you can:
 </div>
 
 <!-- All buttons container (hidden by default) -->
-<div id="{{ include.container_id | default: 'ocjs-viewer' }}-export-buttons" style="display: none; text-align: center; margin: 10px 0; padding: 10px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px;">
-  <button id="{{ include.container_id | default: 'ocjs-viewer' }}-edit-code" style="margin: 0 10px 0 0; padding: 8px 16px; background: #6f42c1; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">EDIT</button>
+<div id="{{ include.container_id | default: 'ocjs-viewer' }}-export-buttons" style="display: none; text-align: center; margin: 10px 0; padding: 15px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px;">
+  <!-- First row: Control buttons -->
+  <div style="margin-bottom: 10px;">
+    <button id="{{ include.container_id | default: 'ocjs-viewer' }}-edit-code" style="margin: 0 5px; padding: 8px 16px; background: #6f42c1; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">EDIT</button>
+    
+    <!-- Editor control buttons (hidden by default, shown when editor is open) -->
+    <span id="{{ include.container_id | default: 'ocjs-viewer' }}-editor-controls" style="display: none;">
+      <button id="{{ include.container_id | default: 'ocjs-viewer' }}-run-code" style="background: #28a745; color: white; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; font-size: 14px; margin: 0 5px;">RUN</button>
+      <button id="{{ include.container_id | default: 'ocjs-viewer' }}-undo-code" style="background: #ffc107; color: #212529; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; font-size: 14px; margin: 0 5px;">UNDO</button>
+      <button id="{{ include.container_id | default: 'ocjs-viewer' }}-reset-code" style="background: #6c757d; color: white; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; font-size: 14px; margin: 0 5px;">RESET</button>
+    </span>
+    
+    <button id="{{ include.container_id | default: 'ocjs-viewer' }}-spin-toggle" style="margin: 0 5px; padding: 8px 16px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">SPIN: ON</button>
+    <button id="{{ include.container_id | default: 'ocjs-viewer' }}-frame-toggle" style="margin: 0 5px; padding: 8px 16px; background: #ffc107; color: black; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">FRAME: LIGHT</button>
+    <button id="{{ include.container_id | default: 'ocjs-viewer' }}-shading-toggle" style="margin: 0 5px; padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">SHADING: GRAY</button>
+  </div>
   
-  <!-- Editor control buttons (hidden by default, shown when editor is open) -->
-  <span id="{{ include.container_id | default: 'ocjs-viewer' }}-editor-controls" style="display: none;">
-    <button id="{{ include.container_id | default: 'ocjs-viewer' }}-run-code" style="background: #28a745; color: white; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; font-size: 14px; margin: 0 5px;">RUN</button>
-    <button id="{{ include.container_id | default: 'ocjs-viewer' }}-undo-code" style="background: #ffc107; color: #212529; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; font-size: 14px; margin: 0 5px;">UNDO</button>
-    <button id="{{ include.container_id | default: 'ocjs-viewer' }}-reset-code" style="background: #6c757d; color: white; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; font-size: 14px; margin: 0 5px;">RESET</button>
-  </span>
-  
-  <span style="margin: 0 10px; font-weight: bold; color: #495057; vertical-align: middle;">Export:</span>
-  <button id="{{ include.container_id | default: 'ocjs-viewer' }}-export-step" style="margin: 0 5px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">STEP</button>
-  <button id="{{ include.container_id | default: 'ocjs-viewer' }}-export-stl" style="margin: 0 5px; padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">STL</button>
-  <button id="{{ include.container_id | default: 'ocjs-viewer' }}-export-gltf" style="margin: 0 5px; padding: 8px 16px; background: #ffc107; color: black; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">GLTF</button>
-
-  <span style="margin: 0 10px; font-weight: bold; color: #495057; vertical-align: middle;"> </span>
-
-  <button id="{{ include.container_id | default: 'ocjs-viewer' }}-spin-toggle" style="margin: 0 5px 0 0; padding: 8px 16px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">SPIN: ON</button>
-  <button id="{{ include.container_id | default: 'ocjs-viewer' }}-frame-toggle" style="margin: 0 5px 0 0; padding: 8px 16px; background: #ffc107; color: black; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">FRAME: LIGHT</button>
-  <button id="{{ include.container_id | default: 'ocjs-viewer' }}-shading-toggle" style="margin: 0 15px 0 0; padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">SHADING: GRAY</button>
+  <!-- Second row: Export buttons (centered) -->
+  <div>
+    <span style="margin: 0 10px 0 0; font-weight: bold; color: #495057; vertical-align: middle;">Export:</span>
+    <button id="{{ include.container_id | default: 'ocjs-viewer' }}-export-step" style="margin: 0 5px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">STEP</button>
+    <button id="{{ include.container_id | default: 'ocjs-viewer' }}-export-stl" style="margin: 0 5px; padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">STL</button>
+    <button id="{{ include.container_id | default: 'ocjs-viewer' }}-export-gltf" style="margin: 0 5px; padding: 8px 16px; background: #ffc107; color: black; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">GLTF</button>
+  </div>
 </div>
 
 <!-- Import map for OpenCascade.js and Three.js ES modules -->
@@ -160,16 +164,18 @@ window.cascadeViewer = {
 
   // Show export buttons after successful model load
   showExportButtons: function(containerId) {
+    // Show the unified buttons container
     const exportButtonsId = containerId + '-export-buttons';
     const exportButtons = document.getElementById(exportButtonsId);
     if (exportButtons) {
       exportButtons.style.display = 'block';
-      console.log('✅ Export buttons shown for container:', containerId);
+      console.log('✅ Unified button container shown for container:', containerId);
     }
   },
 
   // Hide export buttons
   hideExportButtons: function(containerId) {
+    // Hide the unified buttons container
     const exportButtonsId = containerId + '-export-buttons';
     const exportButtons = document.getElementById(exportButtonsId);
     if (exportButtons) {
