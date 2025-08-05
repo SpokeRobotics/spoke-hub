@@ -47,7 +47,10 @@ After including this, you can:
   <div style="background: #e9ecef; padding: 10px; border-bottom: 1px solid #dee2e6; border-radius: 4px 4px 0 0;">
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <h5 style="margin: 0; color: #495057;">Code Editor</h5>
-      <button id="{{ include.container_id | default: 'ocjs-viewer' }}-editor-close" style="background: #dc3545; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px;">Close</button>
+      <div>
+        <button id="{{ include.container_id | default: 'ocjs-viewer' }}-copy-code" style="background: #007bff; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px; margin-right: 5px;">Copy Code</button>
+        <button id="{{ include.container_id | default: 'ocjs-viewer' }}-editor-close" style="background: #dc3545; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px;">Close</button>
+      </div>
     </div>
   </div>
   
@@ -87,6 +90,7 @@ After including this, you can:
     <button id="{{ include.container_id | default: 'ocjs-viewer' }}-export-gltf" style="margin: 0 5px; padding: 8px 16px; background: #ffc107; color: black; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">GLTF</button>
   </div>
 </div>
+
 
 <!-- Import map for OpenCascade.js and Three.js ES modules -->
 <script type="importmap">
@@ -129,6 +133,7 @@ window.ocjsReady = initOpenCascade({
   locateFile: function(path, prefix) {
     // Return the unpkg CDN path for WASM files
     if (path.endsWith('.wasm')) {
+      // return 'https://unpkg.com/opencascade.js@2.0.0-beta.b5ff984/dist/' + path;
       return 'https://unpkg.com/opencascade.js@1.1.1/dist/' + path;
     }
     return prefix + path;
@@ -1259,6 +1264,7 @@ window.cascadeViewer = {
     const undoBtn = document.getElementById(containerId + '-undo-code');
     const resetBtn = document.getElementById(containerId + '-reset-code');
     const closeBtn = document.getElementById(containerId + '-editor-close');
+    const copyBtn = document.getElementById(containerId + '-copy-code');
     
     // Initialize version tracking for this container
     if (!this.editorVersions) {
@@ -1282,6 +1288,9 @@ window.cascadeViewer = {
     }
     if (closeBtn) {
       closeBtn.onclick = () => this.closeCodeEditor(containerId);
+    }
+    if (copyBtn) {
+      copyBtn.onclick = () => this.copyCodeToClipboard(containerId);
     }
   },
   
@@ -1312,6 +1321,74 @@ window.cascadeViewer = {
     this.updateStatus(containerId, 'Code editor closed', 'info', 2000);
     
     console.log('✅ Code editor closed for:', containerId);
+  },
+  
+  // Copy code from editor to clipboard
+  copyCodeToClipboard: function(containerId) {
+    if (!this.aceEditors[containerId]) {
+      console.error('❌ Ace editor not found for container:', containerId);
+      this.updateStatus(containerId, 'Error: Editor not available', 'error', 3000);
+      return;
+    }
+    
+    try {
+      // Get the current code from the Ace editor
+      const currentCode = this.aceEditors[containerId].getValue();
+      
+      if (!currentCode || currentCode.trim() === '') {
+        this.updateStatus(containerId, 'No code to copy', 'warning', 2000);
+        return;
+      }
+      
+      // Use the modern Clipboard API if available
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(currentCode).then(() => {
+          this.updateStatus(containerId, `Code copied to clipboard (${currentCode.length} characters)`, 'success', 3000);
+          console.log('✅ Code copied to clipboard via Clipboard API');
+        }).catch(err => {
+          console.error('❌ Failed to copy via Clipboard API:', err);
+          this.fallbackCopyToClipboard(currentCode, containerId);
+        });
+      } else {
+        // Fallback for older browsers or non-secure contexts
+        this.fallbackCopyToClipboard(currentCode, containerId);
+      }
+      
+    } catch (error) {
+      console.error('❌ Error copying code to clipboard:', error);
+      this.updateStatus(containerId, 'Failed to copy code to clipboard', 'error', 3000);
+    }
+  },
+  
+  // Fallback copy method for older browsers
+  fallbackCopyToClipboard: function(text, containerId) {
+    try {
+      // Create a temporary textarea element
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      
+      // Select and copy the text
+      textArea.focus();
+      textArea.select();
+      
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      if (successful) {
+        this.updateStatus(containerId, `Code copied to clipboard (${text.length} characters)`, 'success', 3000);
+        console.log('✅ Code copied to clipboard via fallback method');
+      } else {
+        throw new Error('execCommand failed');
+      }
+      
+    } catch (error) {
+      console.error('❌ Fallback copy method failed:', error);
+      this.updateStatus(containerId, 'Failed to copy code - please select and copy manually', 'error', 5000);
+    }
   },
   
   // Populate editor with current cascade code
