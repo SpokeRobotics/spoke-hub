@@ -13,6 +13,31 @@ After including this, you can:
 3. Call window.cascadeViewer.displayModel(shape) to show any OpenCascade shape
 {% endcomment %}
 
+<!-- CSS to hide cascade code blocks during loading to prevent flash -->
+<style>
+  /* Hide cascade code blocks initially to prevent jarring flash during load */
+  code.language-cascade {
+    display: none !important;
+  }
+  
+  /* Also hide the pre elements containing cascade code */
+  pre:has(code.language-cascade) {
+    display: none !important;
+  }
+  
+  /* Fallback for browsers that don't support :has() */
+  pre code.language-cascade {
+    display: none !important;
+  }
+  
+  /* Hide any pre elements that contain cascade text (additional fallback) */
+  pre {
+    &:has(code.language-cascade) {
+      display: none !important;
+    }
+  }
+</style>
+
 <!-- Viewer container -->
 <div id="{{ include.container_id | default: 'ocjs-viewer' }}" style="width: 100%; height: 600px; max-width: 100%; margin: 0 auto; border: 1px solid #ccc;"></div>
 

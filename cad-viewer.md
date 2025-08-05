@@ -4,7 +4,7 @@ title: "Spoke CAD Viewer"
 permalink: /cad-viewer/
 ---
 
-This page hosts an interactive 3-D model viewer that uses [OpenCascade.js](https://ocjs.org/) to construct CAD geometry, exports it to GLB format, and displays it with Three.js.
+This page hosts an interactive 3-D model viewer that uses [OpenCascade.js](https://ocjs.org/) to construct CAD geometry, exports it to GLB format, and displays it with Three.js.  An embedded Ace editor allows you to experiment with the code and see what does what.  If you need the model for anything else, you can export it to STEP, STL, or GLTF.
 
 {% include ocjs_init.html container_id="viewer" %}
 
