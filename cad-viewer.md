@@ -266,34 +266,30 @@ This page hosts an interactive 3-D model viewer that uses [OpenCascade.js](https
               
               let normal = edge1.cross(edge2).normalize();
               
-              // Check if normal is pointing inward (negative dot product with centroid)
-              const centroid = new THREE.Vector3(
-                (v1.X() + v2.X() + v3.X()) / 3,
-                (v1.Y() + v2.Y() + v3.Y()) / 3,
-                (v1.Z() + v2.Z() + v3.Z()) / 3
-              );
+              // Get face orientation from OpenCascade
+              const faceOrientation = face.Orientation_1();
               
-              // For box faces, we want normals pointing outward
-              // If the normal points toward the box center, flip it
-              const boxCenter = new THREE.Vector3(24, 16, 18); // Center of our frame
-              const toCenter = boxCenter.clone().sub(centroid).normalize();
+              // Check if face is reversed according to OpenCascade
+              // TopAbs_FORWARD = 0, TopAbs_REVERSED = 1, TopAbs_INTERNAL = 2, TopAbs_EXTERNAL = 3
+              const isReversed = (faceOrientation === oc.TopAbs_Orientation.TopAbs_REVERSED);
               
-              if (normal.dot(toCenter) > 0) {
-                // Normal is pointing inward, flip it
+              if (isReversed) {
+                // Face is reversed, flip normal and triangle winding
                 normal.negate();
-                // Also flip triangle winding order
                 indices.push(
                   vertexOffset + n1 - 1,
-                  vertexOffset + n3 - 1,  // Swapped n2 and n3
+                  vertexOffset + n3 - 1,  // Swapped n2 and n3 for reversed winding
                   vertexOffset + n2 - 1
                 );
+                console.log(`     Triangle ${t}: REVERSED orientation, flipped normal and winding`);
               } else {
-                // Normal is pointing outward, keep original winding
+                // Face is forward, keep original normal and winding
                 indices.push(
                   vertexOffset + n1 - 1,
                   vertexOffset + n2 - 1,
                   vertexOffset + n3 - 1
                 );
+                console.log(`     Triangle ${t}: FORWARD orientation, kept original normal and winding`);
               }
               
               // Add the corrected normal for all three vertices of the triangle
