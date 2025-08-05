@@ -16,55 +16,42 @@ After including this, you can:
 <!-- Viewer container -->
 <div id="{{ include.container_id | default: 'ocjs-viewer' }}" style="width: 100%; height: 600px; max-width: 100%; margin: 0 auto; border: 1px solid #ccc;"></div>
 
-<!-- Export buttons container (hidden by default) -->
-<div id="{{ include.container_id | default: 'ocjs-viewer' }}-export-buttons" style="display: none; text-align: center; margin: 10px 0; padding: 10px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px;">
-  <!-- Edit button section -->
-  <div style="margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #dee2e6;">
-    <p style="margin: 0 0 10px 0; font-weight: bold; color: #495057;">✏️ Edit Code:</p>
-    <button id="{{ include.container_id | default: 'ocjs-viewer' }}-edit-code" style="margin: 0 5px; padding: 8px 16px; background: #6f42c1; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">EDIT</button>
-  </div>
-  
-  <!-- Export section -->
-  <div>
-    <p style="margin: 0 0 10px 0; font-weight: bold; color: #495057;">📁 Export Model:</p>
-    <button id="{{ include.container_id | default: 'ocjs-viewer' }}-export-step" style="margin: 0 5px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">STEP</button>
-    <button id="{{ include.container_id | default: 'ocjs-viewer' }}-export-stl" style="margin: 0 5px; padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">STL</button>
-    <button id="{{ include.container_id | default: 'ocjs-viewer' }}-export-gltf" style="margin: 0 5px; padding: 8px 16px; background: #ffc107; color: black; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">GLTF</button>
-  </div>
-</div>
-
 <!-- Code editor container (hidden by default) -->
 <div id="{{ include.container_id | default: 'ocjs-viewer' }}-editor-container" style="display: none; margin: 10px 0; border: 1px solid #dee2e6; border-radius: 4px; background: #f8f9fa;">
   <!-- Editor header -->
-  <div style="padding: 10px; background: #e9ecef; border-bottom: 1px solid #dee2e6; border-radius: 4px 4px 0 0;">
+  <div style="background: #e9ecef; padding: 10px; border-bottom: 1px solid #dee2e6; border-radius: 4px 4px 0 0;">
     <div style="display: flex; justify-content: space-between; align-items: center;">
-      <h4 style="margin: 0; color: #495057; font-size: 16px;">🛠️ Edit Cascade Code</h4>
-      <button id="{{ include.container_id | default: 'ocjs-viewer' }}-editor-close" style="background: #6c757d; color: white; border: none; border-radius: 3px; padding: 5px 10px; cursor: pointer; font-size: 12px;">✕ Close</button>
+      <h5 style="margin: 0; color: #495057;">Code Editor</h5>
+      <button id="{{ include.container_id | default: 'ocjs-viewer' }}-editor-close" style="background: #dc3545; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px;">Close</button>
     </div>
   </div>
   
-  <!-- Editor content -->
-  <div style="padding: 15px;">
-    <!-- Ace Editor will be inserted here -->
-    <div id="{{ include.container_id | default: 'ocjs-viewer' }}-ace-editor" style="width: 100%; height: 300px; border: 1px solid #ced4da; border-radius: 4px;"></div>
-    
-    <!-- Editor controls -->
-    <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
-      <div>
-        <button id="{{ include.container_id | default: 'ocjs-viewer' }}-run-code" style="background: #28a745; color: white; border: none; border-radius: 4px; padding: 10px 20px; cursor: pointer; font-size: 14px; font-weight: bold;">▶️ RUN</button>
-        <button id="{{ include.container_id | default: 'ocjs-viewer' }}-reset-code" style="background: #6c757d; color: white; border: none; border-radius: 4px; padding: 10px 20px; cursor: pointer; font-size: 14px; margin-left: 10px;">🔄 Reset</button>
-      </div>
-      <div style="font-size: 12px; color: #6c757d;">
-        <kbd>Ctrl+Enter</kbd> to run
-      </div>
-    </div>
-    
-    <!-- Error display area -->
-    <div id="{{ include.container_id | default: 'ocjs-viewer' }}-error-display" style="display: none; margin-top: 15px; padding: 15px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; color: #721c24;">
-      <h5 style="margin: 0 0 10px 0; color: #721c24;">❌ Error</h5>
-      <pre id="{{ include.container_id | default: 'ocjs-viewer' }}-error-message" style="margin: 0; white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 13px;"></pre>
-    </div>
+  <!-- Ace Editor -->
+  <div id="{{ include.container_id | default: 'ocjs-viewer' }}-ace-editor" style="width: 100%; height: 400px;"></div>
+  
+  <!-- Error display area -->
+  <div id="{{ include.container_id | default: 'ocjs-viewer' }}-error-display" style="display: none; margin: 15px; padding: 15px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; color: #721c24;">
+    <h5 style="margin: 0 0 10px 0; color: #721c24;">Error</h5>
+    <pre id="{{ include.container_id | default: 'ocjs-viewer' }}-error-message" style="margin: 0; white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 13px;"></pre>
   </div>
+</div>
+
+<!-- All buttons container (hidden by default) -->
+<div id="{{ include.container_id | default: 'ocjs-viewer' }}-export-buttons" style="display: none; text-align: center; margin: 10px 0; padding: 10px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px;">
+  <button id="{{ include.container_id | default: 'ocjs-viewer' }}-edit-code" style="margin: 0 10px 0 0; padding: 8px 16px; background: #6f42c1; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">EDIT</button>
+  
+  <!-- Editor control buttons (hidden by default, shown when editor is open) -->
+  <span id="{{ include.container_id | default: 'ocjs-viewer' }}-editor-controls" style="display: none;">
+    <button id="{{ include.container_id | default: 'ocjs-viewer' }}-run-code" style="background: #28a745; color: white; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; font-size: 14px; margin: 0 5px;">RUN</button>
+    <button id="{{ include.container_id | default: 'ocjs-viewer' }}-undo-code" style="background: #ffc107; color: #212529; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; font-size: 14px; margin: 0 5px;">UNDO</button>
+    <button id="{{ include.container_id | default: 'ocjs-viewer' }}-reset-code" style="background: #6c757d; color: white; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; font-size: 14px; margin: 0 5px;">RESET</button>
+    <span style="margin: 0 15px; font-weight: bold; color: #495057; vertical-align: middle;">|</span>
+  </span>
+  
+  <span style="margin: 0 10px; font-weight: bold; color: #495057; vertical-align: middle;">Export:</span>
+  <button id="{{ include.container_id | default: 'ocjs-viewer' }}-export-step" style="margin: 0 5px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">STEP</button>
+  <button id="{{ include.container_id | default: 'ocjs-viewer' }}-export-stl" style="margin: 0 5px; padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">STL</button>
+  <button id="{{ include.container_id | default: 'ocjs-viewer' }}-export-gltf" style="margin: 0 5px; padding: 8px 16px; background: #ffc107; color: black; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">GLTF</button>
 </div>
 
 <!-- Import map for OpenCascade.js and Three.js ES modules -->
@@ -962,7 +949,7 @@ window.cascadeViewer = {
       
       // Create the editor
       const editor = window.ace.edit(aceEditorId);
-      editor.setTheme('ace/theme/monokai');
+      editor.setTheme('ace/theme/github');
       editor.session.setMode('ace/mode/javascript');
       editor.setOptions({
         fontSize: 14,
@@ -988,6 +975,20 @@ window.cascadeViewer = {
     // Populate editor with current code
     this.populateEditorWithCurrentCode(containerId);
     
+    // Show editor control buttons and hide EDIT button
+    const editorControls = document.getElementById(containerId + '-editor-controls');
+    const editButton = document.getElementById(containerId + '-edit-code');
+    
+    if (editorControls) {
+      editorControls.style.display = 'inline';
+      console.log('✅ Editor control buttons shown');
+    }
+    
+    if (editButton) {
+      editButton.style.display = 'none';
+      console.log('✅ EDIT button hidden');
+    }
+    
     // Focus the editor
     setTimeout(() => {
       this.aceEditors[containerId].focus();
@@ -999,11 +1000,26 @@ window.cascadeViewer = {
   // Setup editor button handlers
   setupEditorHandlers: function(containerId) {
     const runBtn = document.getElementById(containerId + '-run-code');
+    const undoBtn = document.getElementById(containerId + '-undo-code');
     const resetBtn = document.getElementById(containerId + '-reset-code');
     const closeBtn = document.getElementById(containerId + '-editor-close');
     
+    // Initialize version tracking for this container
+    if (!this.editorVersions) {
+      this.editorVersions = {};
+    }
+    if (!this.editorVersions[containerId]) {
+      this.editorVersions[containerId] = {
+        lastRunCode: null,
+        originalCode: null
+      };
+    }
+    
     if (runBtn) {
       runBtn.onclick = () => this.runCodeFromEditor(containerId);
+    }
+    if (undoBtn) {
+      undoBtn.onclick = () => this.undoEditorChanges(containerId);
     }
     if (resetBtn) {
       resetBtn.onclick = () => this.resetEditorCode(containerId);
@@ -1019,6 +1035,21 @@ window.cascadeViewer = {
     if (editorContainer) {
       editorContainer.style.display = 'none';
     }
+    
+    // Hide editor control buttons and show EDIT button
+    const editorControls = document.getElementById(containerId + '-editor-controls');
+    const editButton = document.getElementById(containerId + '-edit-code');
+    
+    if (editorControls) {
+      editorControls.style.display = 'none';
+      console.log('✅ Editor control buttons hidden');
+    }
+    
+    if (editButton) {
+      editButton.style.display = 'inline-block';
+      console.log('✅ EDIT button shown');
+    }
+    
     this.hideErrorDisplay(containerId);
     console.log('✅ Code editor closed for:', containerId);
   },
@@ -1056,6 +1087,13 @@ window.cascadeViewer = {
     }
     
     this.aceEditors[containerId].setValue(currentCode, -1);
+    
+    // Store the original code for RESET functionality
+    if (this.editorVersions && this.editorVersions[containerId] && !this.editorVersions[containerId].originalCode) {
+      this.editorVersions[containerId].originalCode = currentCode;
+      console.log('💾 Stored original code for RESET functionality');
+    }
+    
     console.log('✅ Editor populated with code for:', containerId);
   },
   
@@ -1102,11 +1140,57 @@ window.cascadeViewer = {
     return null;
   },
   
+  // Undo editor changes (revert to last RUN state)
+  undoEditorChanges: function(containerId) {
+    if (!this.aceEditors[containerId]) {
+      console.error('❌ No editor found for:', containerId);
+      return;
+    }
+    
+    if (!this.editorVersions || !this.editorVersions[containerId] || !this.editorVersions[containerId].lastRunCode) {
+      console.log('⚠️ No previous RUN state to undo to for:', containerId);
+      return;
+    }
+    
+    const lastRunCode = this.editorVersions[containerId].lastRunCode;
+    this.aceEditors[containerId].setValue(lastRunCode, -1);
+    this.hideErrorDisplay(containerId);
+    console.log('↶ Undid changes to last RUN state for:', containerId);
+  },
+  
   // Reset editor to original code
   resetEditorCode: function(containerId) {
-    this.populateEditorWithCurrentCode(containerId);
+    if (!this.aceEditors[containerId]) {
+      console.error('❌ No editor found for:', containerId);
+      return;
+    }
+    
+    // Get the original code from multiple sources
+    let originalCode = null;
+    
+    // Try version tracking first
+    if (this.editorVersions && this.editorVersions[containerId] && this.editorVersions[containerId].originalCode) {
+      originalCode = this.editorVersions[containerId].originalCode;
+    }
+    
+    // Fall back to the same logic as populateEditorWithCurrentCode
+    if (!originalCode) {
+      originalCode = this.currentModelData.originalCode || 
+                    (window.cascadeOriginalCode && window.cascadeOriginalCode[containerId]) ||
+                    this.extractCodeFromPage(containerId) || 
+                    this.extractCodeFromMarkdown();
+    }
+    
+    if (originalCode) {
+      this.aceEditors[containerId].setValue(originalCode, -1);
+      console.log('🔄 Editor reset to original code for:', containerId);
+    } else {
+      // Fallback to repopulating
+      this.populateEditorWithCurrentCode(containerId);
+      console.log('🔄 Editor reset using fallback method for:', containerId);
+    }
+    
     this.hideErrorDisplay(containerId);
-    console.log('✅ Editor code reset for:', containerId);
   },
   
   // Run code from editor
@@ -1119,6 +1203,13 @@ window.cascadeViewer = {
     }
     
     const code = this.aceEditors[containerId].getValue();
+    
+    // Save current state for UNDO functionality
+    if (this.editorVersions && this.editorVersions[containerId]) {
+      this.editorVersions[containerId].lastRunCode = code;
+      console.log('💾 Saved current code state for UNDO');
+    }
+    
     this.hideErrorDisplay(containerId);
     
     // Execute the code

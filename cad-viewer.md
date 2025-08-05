@@ -170,6 +170,3 @@ function buildModel(oc) {
 }
 ```
 
-*Rotate with left-drag, pan with right-drag (or two-finger drag), zoom with scroll.*
-
-**Workflow:** This viewer demonstrates the complete pipeline from OpenCascade.js CAD construction → GLB export → Three.js visualization, with a direct fallback if GLB processing fails.
