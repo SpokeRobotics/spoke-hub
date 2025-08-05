@@ -4,34 +4,39 @@ Usage in any page:
 
   {% include ocjs_init.html container_id="my-viewer" %}
 
-Then add (optionally) a call to `initOcjsBottleViewer('my-viewer');` or your own custom code.
 This include automatically creates a <div> with the specified container_id (default 'ocjs-viewer')
-with responsive sizing and loads OpenCascade.js.
+with responsive sizing and loads OpenCascade.js along with Three.js utilities.
+
+After including this, you can:
+1. Use window.ocjsReady Promise to access OpenCascade.js
+2. Use window.cascadeViewer utilities for 3D visualization
+3. Call window.cascadeViewer.displayModel(shape) to show any OpenCascade shape
 {% endcomment %}
 
 <!-- Viewer container -->
 <div id="{{ include.container_id | default: 'ocjs-viewer' }}" style="width: 100%; height: 600px; max-width: 100%; margin: 0 auto; border: 1px solid #ccc;"></div>
 
-<!-- Import map for OpenCascade.js ES modules -->
+<!-- Import map for OpenCascade.js and Three.js ES modules -->
 <script type="importmap">
 {
   "imports": {
-    "opencascade.js": "https://unpkg.com/opencascade.js@1.1.1/dist/opencascade.wasm.js"
+    "opencascade.js": "https://unpkg.com/opencascade.js@1.1.1/dist/opencascade.wasm.js",
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
   }
 }
 </script>
 
-<!-- Load OpenCascade.js as ES module and expose global promise -->
+<!-- Load OpenCascade.js and Three.js utilities -->
 <script type="module">
 import initOpenCascade from 'opencascade.js';
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 /**
  * window.ocjsReady is a Promise that resolves with the initialized OpenCascade.js module.
- * 
- * Example usage in a page:
- *   const oc = await window.ocjsReady;
- *   const box = new oc.BRepPrimAPI_MakeBox_2(1, 1, 1);
- *   // ...custom geometry...
  */
 window.ocjsReady = initOpenCascade({
   locateFile: function(path, prefix) {
@@ -48,5 +53,617 @@ window.ocjsReady = initOpenCascade({
   console.error('Failed to load OpenCascade.js:', error);
   throw error;
 });
+
+/**
+ * window.cascadeViewer provides utilities for CAD visualization
+ */
+window.cascadeViewer = {
+  // Convert OpenCascade shape to Three.js mesh data
+  convertOpenCascadeToMesh: function(shape, oc) {
+    console.log('🔧 Converting OpenCascade shape to mesh...');
+    
+    try {
+      // Use OpenCascade's meshing capabilities
+      console.log('🔧 Creating mesher...');
+      const mesher = new oc.BRepMesh_IncrementalMesh_2(shape, 0.1, false, 0.5, false);
+      console.log('🔧 Performing mesh operation...');
+      mesher.Perform();
+      
+      if (!mesher.IsDone()) {
+        throw new Error('Failed to mesh the OpenCascade shape');
+      }
+      console.log('✅ Meshing completed successfully');
+      
+      const vertices = [];
+      const indices = [];
+      const normals = [];
+      
+      // Iterate through faces to extract mesh data
+      console.log('🔍 Exploring faces...');
+      const faceExplorer = new oc.TopExp_Explorer_2(shape, oc.TopAbs_ShapeEnum.TopAbs_FACE, oc.TopAbs_ShapeEnum.TopAbs_SHAPE);
+      
+      let vertexOffset = 0;
+      let faceCount = 0;
+      
+      while (faceExplorer.More()) {
+        faceCount++;
+        console.log(`  Processing face ${faceCount}...`);
+        
+        const face = oc.TopoDS.Face_1(faceExplorer.Current());
+        const location = new oc.TopLoc_Location_1();
+        const triangulation = oc.BRep_Tool.Triangulation(face, location);
+        
+        if (!triangulation.IsNull()) {
+          console.log(`  Face ${faceCount} has triangulation data`);
+          const transform = location.Transformation();
+          
+          // Get node and triangle counts using correct API
+          const nodeCount = triangulation.get().NbNodes();
+          const triangleCount = triangulation.get().NbTriangles();
+          console.log(`    Nodes: ${nodeCount}, Triangles: ${triangleCount}`);
+          
+          // Extract vertices
+          for (let i = 1; i <= nodeCount; i++) {
+            const node = triangulation.get().Node(i);
+            const transformedNode = node.Transformed(transform);
+            vertices.push(transformedNode.X(), transformedNode.Y(), transformedNode.Z());
+          }
+          
+          // Process each triangle in the face with corrected orientation
+          for (let t = 1; t <= triangleCount; t++) {
+            const triangle = triangulation.get().Triangle(t);
+            const n1 = triangle.Value(1);
+            const n2 = triangle.Value(2);
+            const n3 = triangle.Value(3);
+            
+            // Get triangle vertices
+            const v1 = triangulation.get().Node(n1).Transformed(transform);
+            const v2 = triangulation.get().Node(n2).Transformed(transform);
+            const v3 = triangulation.get().Node(n3).Transformed(transform);
+            
+            // Compute triangle normal using cross product
+            const edge1 = new THREE.Vector3(
+              v2.X() - v1.X(),
+              v2.Y() - v1.Y(),
+              v2.Z() - v1.Z()
+            );
+            const edge2 = new THREE.Vector3(
+              v3.X() - v1.X(),
+              v3.Y() - v1.Y(),
+              v3.Z() - v1.Z()
+            );
+            
+            let normal = edge1.cross(edge2).normalize();
+            
+            // Get face orientation from OpenCascade
+            const faceOrientation = face.Orientation_1();
+            
+            // Check if face is reversed according to OpenCascade
+            const isReversed = (faceOrientation === oc.TopAbs_Orientation.TopAbs_REVERSED);
+            
+            if (isReversed) {
+              // Face is reversed, flip normal and triangle winding
+              normal.negate();
+              indices.push(
+                vertexOffset + n1 - 1,
+                vertexOffset + n3 - 1,  // Swapped n2 and n3 for reversed winding
+                vertexOffset + n2 - 1
+              );
+            } else {
+              // Face is forward, keep original normal and winding
+              indices.push(
+                vertexOffset + n1 - 1,
+                vertexOffset + n2 - 1,
+                vertexOffset + n3 - 1
+              );
+            }
+            
+            // Add the corrected normal for all three vertices of the triangle
+            for (let j = 0; j < 3; j++) {
+              normals.push(normal.x, normal.y, normal.z);
+            }
+          }
+          
+          vertexOffset += nodeCount;
+        } else {
+          console.log(`  Face ${faceCount} has no triangulation data`);
+        }
+        
+        faceExplorer.Next();
+      }
+      
+      console.log(`🔍 Extracted ${vertices.length / 3} vertices, ${indices.length / 3} triangles from ${faceCount} faces`);
+      
+      if (vertices.length === 0) {
+        throw new Error('No vertices extracted from OpenCascade shape');
+      }
+      
+      // Create Three.js geometry
+      console.log('🔧 Creating Three.js BufferGeometry...');
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+      geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+      geometry.setIndex(indices);
+      
+      console.log('✅ Three.js geometry created successfully');
+      return geometry;
+      
+    } catch (error) {
+      console.error('❌ Error in convertOpenCascadeToMesh:', error);
+      throw error;
+    }
+  },
+
+  // Export geometry to GLB format
+  exportToGLB: function(geometry) {
+    return new Promise((resolve, reject) => {
+      console.log('📦 Exporting geometry to GLB...');
+      
+      try {
+        const material = new THREE.MeshStandardMaterial({ 
+          color: 0x808080,
+          metalness: 0.1,
+          roughness: 0.4,
+          transparent: false,
+          opacity: 1.0
+        });
+        
+        const mesh = new THREE.Mesh(geometry, material);
+        const scene = new THREE.Scene();
+        scene.add(mesh);
+        
+        console.log('📦 Creating GLTFExporter...');
+        const exporter = new GLTFExporter();
+        exporter.parse(
+          scene,
+          (gltf) => {
+            console.log('✅ GLB export successful, size:', gltf.byteLength, 'bytes');
+            resolve(gltf);
+          },
+          (error) => {
+            console.error('❌ GLB export failed:', error);
+            reject(error);
+          },
+          { binary: true }
+        );
+      } catch (error) {
+        console.error('❌ Error setting up GLB export:', error);
+        reject(error);
+      }
+    });
+  },
+
+  // Load GLB and display in Three.js viewer
+  loadGLBAndDisplay: function(glbData, containerId = 'viewer') {
+    console.log('🎬 Loading GLB data into Three.js viewer...');
+    
+    const container = document.getElementById(containerId);
+    
+    // === Initialize Three.js Scene ===
+    console.log('🎬 Initializing Three.js scene...');
+    
+    if (!container) {
+      console.error('❌ Viewer container not found');
+      return;
+    }
+    
+    // Clear previous content to prevent WebGL context conflicts
+    container.innerHTML = '';
+    
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xf0f0f0);
+    
+    // Create camera with proper aspect ratio
+    const containerRect = container.getBoundingClientRect();
+    const camera = new THREE.PerspectiveCamera(
+      75, 
+      containerRect.width / containerRect.height, 
+      0.1, 
+      1000
+    );
+    
+    // Position camera for good viewing angle
+    camera.position.set(80, 60, 80);
+    camera.lookAt(24, 16, 18);
+    
+    // Create renderer
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(containerRect.width, containerRect.height);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    
+    // Append renderer to cleared container
+    container.appendChild(renderer.domElement);
+    
+    // Controls
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.target.set(24, 16, 18);
+    controls.update();
+    
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+    scene.add(ambientLight);
+    
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(100, 100, 50);
+    directionalLight.castShadow = true;
+    scene.add(directionalLight);
+    
+    // Load the GLB data
+    console.log('📦 Loading GLB data...');
+    const loader = new GLTFLoader();
+    const blob = new Blob([glbData], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    
+    loader.load(
+      url,
+      (gltf) => {
+        console.log('✅ GLB loaded successfully');
+        const model = gltf.scene;
+        
+        scene.add(model);
+        console.log('✅ Model added to scene');
+        
+        // Add wireframe overlay
+        model.traverse((child) => {
+          if (child.isMesh) {
+            const wireframe = new THREE.WireframeGeometry(child.geometry);
+            const line = new THREE.LineSegments(wireframe, new THREE.LineBasicMaterial({ 
+              color: 0xFFFFFF, 
+              opacity: 0.3, 
+              transparent: true 
+            }));
+            scene.add(line);
+            
+            // Store references for animation
+            window.cadModel = model;
+            window.cadWireframe = line;
+            console.log('✅ Wireframe overlay added');
+          }
+        });
+        
+        // Clean up blob URL
+        URL.revokeObjectURL(url);
+        
+        console.log('✅ Model setup completed successfully!');
+      },
+      (progress) => {
+        console.log('📊 Loading progress:', progress);
+      },
+      (error) => {
+        console.error('❌ Error loading GLB:', error);
+        URL.revokeObjectURL(url);
+      }
+    );
+    
+    // Animation loop
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      
+      // Rotate the CAD model and wireframe if they exist
+      if (window.cadModel && window.cadWireframe) {
+        window.cadModel.rotation.x += 0.005;
+        window.cadModel.rotation.y += 0.005;
+        window.cadWireframe.rotation.x += 0.005;
+        window.cadWireframe.rotation.y += 0.005;
+      }
+      
+      renderer.render(scene, camera);
+    }
+    
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    });
+    
+    animate();
+    console.log('🎬 Animation loop started');
+  },
+
+  // Fallback: Direct Three.js visualization (skip GLB export/import)
+  directThreeJSVisualization: function(geometry, containerId = 'viewer') {
+    console.log('🎯 Using direct Three.js visualization fallback...');
+    
+    const container = document.getElementById(containerId);
+    
+    // Check if a renderer already exists and dispose of it properly
+    if (window.threeJSRenderer) {
+      console.log('🧹 Disposing existing Three.js renderer');
+      window.threeJSRenderer.dispose();
+      window.threeJSRenderer = null;
+    }
+    
+    // Clear any existing content completely
+    container.innerHTML = '';
+    
+    // Scene setup
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xf0f0f0);
+    
+    // Camera setup
+    const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+    camera.position.set(100, 100, 100);
+    
+    // Renderer setup
+    const renderer = new THREE.WebGLRenderer({ 
+      antialias: true,
+      alpha: false,
+      preserveDrawingBuffer: false,
+      powerPreference: "high-performance"
+    });
+    
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    
+    // Store renderer globally for cleanup
+    window.threeJSRenderer = renderer;
+    
+    // Add renderer canvas to container
+    container.appendChild(renderer.domElement);
+    
+    // Controls
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+    scene.add(ambientLight);
+    
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(100, 100, 50);
+    directionalLight.castShadow = true;
+    scene.add(directionalLight);
+    
+    // Create mesh from OpenCascade-derived geometry
+    const material = new THREE.MeshStandardMaterial({ 
+      color: 0x808080,
+      metalness: 0.1,
+      roughness: 0.4,
+      transparent: true,
+      opacity: 0.9
+    });
+    
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    scene.add(mesh);
+    
+    // Add wireframe overlay
+    const wireframe = new THREE.WireframeGeometry(geometry);
+    const line = new THREE.LineSegments(wireframe, new THREE.LineBasicMaterial({ 
+      color: 0x000000, 
+      opacity: 0.3, 
+      transparent: true 
+    }));
+    scene.add(line);
+    
+    // Store references for animation
+    window.cadModel = mesh;
+    window.cadWireframe = line;
+    
+    // Animation loop
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      
+      mesh.rotation.x += 0.005;
+      mesh.rotation.y += 0.005;
+      line.rotation.x += 0.005;
+      line.rotation.y += 0.005;
+      
+      renderer.render(scene, camera);
+    }
+    
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    });
+    
+    animate();
+    console.log('✅ Direct Three.js visualization completed successfully!');
+  },
+
+  // Main function to display any OpenCascade shape
+  displayModel: async function(shape, containerId = 'viewer') {
+    try {
+      console.log('🚀 Starting OpenCascade.js → GLB → Three.js workflow...');
+      
+      const oc = await window.ocjsReady;
+      
+      // Step 1: Convert OpenCascade shape to Three.js geometry
+      console.log('🔧 Step 1: Converting OpenCascade shape to mesh...');
+      const geometry = this.convertOpenCascadeToMesh(shape, oc);
+      
+      // Try GLB workflow first
+      try {
+        console.log('📦 Step 2: Attempting GLB export/import workflow...');
+        // Step 2: Export geometry to GLB
+        const glbData = await this.exportToGLB(geometry);
+        
+        // Step 3: Load GLB and display in Three.js
+        this.loadGLBAndDisplay(glbData, containerId);
+        
+        console.log('✅ CAD viewer GLB workflow completed successfully!');
+        
+      } catch (glbError) {
+        console.warn('⚠️ GLB workflow failed, falling back to direct visualization:', glbError);
+        
+        // Fallback: Direct Three.js visualization
+        this.directThreeJSVisualization(geometry, containerId);
+        
+        console.log('✅ CAD viewer fallback workflow completed successfully!');
+      }
+      
+    } catch (error) {
+      console.error('❌ Error in CAD viewer workflow:', error);
+      
+      // Ultimate fallback display
+      const container = document.getElementById(containerId);
+      container.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f0f0f0; color: #333; font-family: Arial, sans-serif;">
+          <div style="text-align: center;">
+            <h3>🔧 OpenCascade.js → Three.js Workflow</h3>
+            <p>OpenCascade shape created successfully!</p>
+            <p><em>⚠️ 3D viewer encountered an error during processing. Check console for details.</em></p>
+            <p><strong>Error:</strong> ${error.message}</p>
+          </div>
+        </div>
+      `;
+    }
+  }
+};
+
+console.log('✅ Cascade viewer utilities loaded successfully!');
+
+/**
+ * Auto-detect and execute cascade code blocks
+ */
+window.cascadeViewer.autoDetectAndExecute = function() {
+  // Wait for OpenCascade to be ready
+  window.ocjsReady.then(oc => {
+    console.log('🔍 Scanning for cascade code blocks...');
+    
+    // Find all code elements with language-cascade class
+    const cascadeBlocks = document.querySelectorAll('code.language-cascade');
+    
+    if (cascadeBlocks.length === 0) {
+      console.log('ℹ️ No cascade code blocks found on this page');
+      return;
+    }
+    
+    console.log(`🎯 Found ${cascadeBlocks.length} cascade code block(s)`);
+    
+    // Process each cascade block
+    cascadeBlocks.forEach((codeBlock, index) => {
+      try {
+        console.log(`🚀 Processing cascade block ${index + 1}...`);
+        
+        // Get the code content
+        const codeContent = codeBlock.textContent || codeBlock.innerText;
+        console.log(`📝 Code content (${codeContent.length} chars):`, codeContent.substring(0, 100) + '...');
+        
+        // Find the container for this code block (look for nearby viewer divs)
+        let containerId = 'viewer'; // default
+        
+        // Look for a viewer div near this code block
+        let parent = codeBlock.parentElement;
+        while (parent && parent !== document.body) {
+          const viewerDiv = parent.querySelector('div[id*="viewer"]');
+          if (viewerDiv) {
+            containerId = viewerDiv.id;
+            console.log(`🎯 Found viewer container: ${containerId}`);
+            break;
+          }
+          parent = parent.parentElement;
+        }
+        
+        // Create a function wrapper and execute the code
+        const functionWrapper = `
+          (function(oc) {
+            ${codeContent}
+            
+            // Expect a buildModel function to be defined
+            if (typeof buildModel === 'function') {
+              return buildModel(oc);
+            } else {
+              throw new Error('cascade code block must define a buildModel(oc) function that returns a shape');
+            }
+          })
+        `;
+        
+        console.log('🔧 Executing cascade code...');
+        const executeCode = eval(functionWrapper);
+        const shape = executeCode(oc);
+        
+        if (shape) {
+          console.log('✅ Model built successfully, displaying...');
+          
+          // Replace the code block with a loading message
+          const loadingDiv = document.createElement('div');
+          loadingDiv.innerHTML = `
+            <div style="padding: 20px; text-align: center; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; margin: 10px 0;">
+              <p>🚀 <strong>Cascade Model ${index + 1}</strong></p>
+              <p>Loading 3D viewer...</p>
+            </div>
+          `;
+          
+          // Find the pre element containing this code block and replace it
+          let preElement = codeBlock.parentElement;
+          while (preElement && preElement.tagName !== 'PRE') {
+            preElement = preElement.parentElement;
+          }
+          
+          if (preElement) {
+            preElement.parentNode.replaceChild(loadingDiv, preElement);
+          }
+          
+          // Display the model
+          this.displayModel(shape, containerId);
+          
+          // Update the loading message to success
+          setTimeout(() => {
+            loadingDiv.innerHTML = `
+              <div style="padding: 10px; text-align: center; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; margin: 10px 0;">
+                <p>✅ <strong>Cascade Model ${index + 1}</strong> - Loaded Successfully</p>
+              </div>
+            `;
+          }, 1000);
+          
+        } else {
+          throw new Error('buildModel function did not return a valid shape');
+        }
+        
+      } catch (error) {
+        console.error(`❌ Error processing cascade block ${index + 1}:`, error);
+        
+        // Show error message in place of code block
+        const errorDiv = document.createElement('div');
+        errorDiv.innerHTML = `
+          <div style="padding: 20px; text-align: center; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; margin: 10px 0;">
+            <p>❌ <strong>Cascade Model ${index + 1} - Error</strong></p>
+            <p><em>${error.message}</em></p>
+            <details style="margin-top: 10px; text-align: left;">
+              <summary>Show Code</summary>
+              <pre style="background: #f8f9fa; padding: 10px; margin-top: 10px; border-radius: 4px; overflow-x: auto;"><code>${codeBlock.textContent || codeBlock.innerText}</code></pre>
+            </details>
+          </div>
+        `;
+        
+        // Find the pre element containing this code block and replace it
+        let preElement = codeBlock.parentElement;
+        while (preElement && preElement.tagName !== 'PRE') {
+          preElement = preElement.parentElement;
+        }
+        
+        if (preElement) {
+          preElement.parentNode.replaceChild(errorDiv, preElement);
+        }
+      }
+    });
+    
+  }).catch(error => {
+    console.error('❌ Failed to initialize cascade auto-detection:', error);
+  });
+};
+
+// Auto-run cascade detection when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    window.cascadeViewer.autoDetectAndExecute();
+  });
+} else {
+  // DOM is already ready
+  window.cascadeViewer.autoDetectAndExecute();
+}
+
 </script>
 
